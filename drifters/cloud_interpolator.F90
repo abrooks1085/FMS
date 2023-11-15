@@ -129,17 +129,17 @@ pure subroutine cld_ntrp_linear_cell_interp(fvals, ts, f, ier)
 
 !...............................................................................
 !...............................................................................
-pure subroutine cld_ntrp_locate_cell(axis, x, index, ier)
+pure subroutine cld_ntrp_locate_cell(axis, x, idx, ier)
     real, intent(in)     :: axis(:) !< axis
     real, intent(in)     :: x       !< abscissae
-    integer, intent(out) :: index   !< lower-left corner index
+    integer, intent(out) :: idx   !< lower-left corner index
     integer, intent(out) ::  ier    !< error flag (0=ok)
 
     logical down
     integer n, index1, is
     real axis_1, axis_n, axis_min, axis_max
     ier   = 0
-    index = -1
+    idx = -1
     down = .FALSE.
     n = size(axis)
     if(n < 2) then
@@ -165,49 +165,49 @@ pure subroutine cld_ntrp_locate_cell(axis, x, index, ier)
        return
     endif
 
-    index = floor(real(n-1)*(x - axis_1)/(axis_n-axis_1)) + 1
-    index  = min(n-1, index)
-    index1 = index+1
+    idx = floor(real(n-1)*(x - axis_1)/(axis_n-axis_1)) + 1
+    idx  = min(n-1, idx)
+    idx1 = idx+1
 
     if(.NOT. down) then
-       if(axis(index) <= x+tol) then
+       if(axis(idx) <= x+tol) then
           if(x <= axis(index1)+tol) then
              ! axis is uniform, or nearly so. Done!
              return
           else
              ! increase index
-             is = index+1
-             do index = is, n-1
-                index1 = index+1
+             is = idx+1
+             do idx = is, n-1
+                idx1 = idx+1
                 if(axis(index1) >= x-tol) return
              enddo
           endif
        else
           ! decrease index
-          is = index - 1
-          do index = is, 1, -1
-             if(axis(index) <= x+tol) return
+          is = idx - 1
+          do idx = is, 1, -1
+             if(axis(idx) <= x+tol) return
           enddo
        endif
     else
        ! axis is pointing down
-       if(axis(index) >= x-tol) then
+       if(axis(idx) >= x-tol) then
           if(x >= axis(index1)-tol) then
              ! axis is uniform, or nearly so. Done!
              return
           else
              ! increase index
-             is = index + 1
-             do index = is, n-1
-                index1 = index+1
+             is = idx + 1
+             do idx = is, n-1
+                index1 = idx+1
                 if(axis(index1) <= x+tol) return
              enddo
           endif
        else
           ! decrease index
-          is = index - 1
-          do index = is, 1, -1
-             if(axis(index) >= x-tol) return
+          is = idx - 1
+          do idx = is, 1, -1
+             if(axis(idx) >= x-tol) return
           enddo
        endif
     endif
