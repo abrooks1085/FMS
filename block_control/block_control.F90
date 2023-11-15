@@ -60,7 +60,7 @@ type :: block_control_type
   integer, dimension(:,:),      allocatable :: blkno !< dereference block number using global indices
   integer, dimension(:,:),      allocatable :: ixp   !< dereference packed index from global indices
                                                             !! must be used in conjuction with blkno
-  type(pk_type), dimension(:),  allocatable :: index !< dereference global indices from
+  type(pk_type), dimension(:),  allocatable :: idx !< dereference global indices from
                                                             !! block/ixp combo
 end type block_control_type
 
@@ -222,7 +222,7 @@ contains
     Block%nblks = nblks
     if (.not. allocated(Block%blksz)) &
       allocate (Block%blksz(nblks), &
-                Block%index(nblks), &
+                Block%idx(nblks), &
                 Block%blkno(isc:iec,jsc:jec), &
                 Block%ixp(isc:iec,jsc:jec))
 
@@ -231,8 +231,8 @@ contains
       lblksz = blksz
       if (nb .EQ. nblks) lblksz = tot_pts - (nb-1) * blksz
       Block%blksz(nb) = lblksz
-      allocate (Block%index(nb)%ii(lblksz), &
-                Block%index(nb)%jj(lblksz))
+      allocate (Block%idx(nb)%ii(lblksz), &
+                Block%idx(nb)%jj(lblksz))
     enddo
 
 !--- set up packed indices
@@ -247,8 +247,8 @@ contains
         endif
         Block%ixp(ii,jj) = ix
         Block%blkno(ii,jj) = nb
-        Block%index(nb)%ii(ix) = ii
-        Block%index(nb)%jj(ix) = jj
+        Block%idx(nb)%ii(ix) = ii
+        Block%idx(nb)%jj(ix) = jj
       enddo
     enddo
 
