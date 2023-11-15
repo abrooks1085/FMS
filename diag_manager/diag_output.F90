@@ -227,7 +227,7 @@ CONTAINS
     INTEGER              :: num_attributes
     TYPE(diag_atttype), DIMENSION(:), ALLOCATABLE :: attributes
     INTEGER              :: calendar, id_axis, id_time_axis
-    INTEGER              :: i, j, index, num, length, edges_index
+    INTEGER              :: i, j, idx, num, length, edges_index
     INTEGER              :: gend !< End index of global io_domain
     LOGICAL              :: time_ops1
     CHARACTER(len=2048)  :: err_msg
@@ -272,10 +272,10 @@ CONTAINS
     !---- write axis meta data for new axes ----
     DO i = 1, num
        id_axis = axes(i)
-       index = get_axis_index ( id_axis )
+       idx = get_axis_index ( id_axis )
 
        !---- skip axes already written -----
-       IF ( index > 0 ) CYCLE
+       IF ( idx > 0 ) CYCLE
 
        !---- create new axistype (then point to) -----
        num_axis_in_file = num_axis_in_file + 1
@@ -885,19 +885,19 @@ character(len=128),dimension(size(axes)) :: axis_names
 
   !> @brief Return the axis index number.
   !! @return Integer index
-  FUNCTION get_axis_index(num) RESULT ( index )
+  FUNCTION get_axis_index(num) RESULT ( idx )
     INTEGER, INTENT(in) :: num
 
-    INTEGER :: index
+    INTEGER :: idx
     INTEGER :: i
 
     !---- get the array index for this axis type ----
     !---- set up pointers to axistypes ----
     !---- write axis meta data for new axes ----
-    index = 0
+    idx = 0
     DO i = 1, num_axis_in_file
        IF ( num == axis_in_file(i) ) THEN
-          index = i
+          idx = i
           EXIT
        END IF
     END DO
