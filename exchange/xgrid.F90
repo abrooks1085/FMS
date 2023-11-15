@@ -4634,7 +4634,7 @@ end subroutine stock_integrate_2d
 
 
 
-subroutine stock_print(stck, Time, comp_name, index, ref_value, radius, pelist)
+subroutine stock_print(stck, Time, comp_name, idx, ref_value, radius, pelist)
 
   use mpp_mod, only : mpp_pe, mpp_root_pe, mpp_sum
   use time_manager_mod, only : time_type, get_time
@@ -4643,7 +4643,7 @@ subroutine stock_print(stck, Time, comp_name, index, ref_value, radius, pelist)
   type(stock_type), intent(in)           :: stck
   type(time_type),  intent(in)           :: Time
   character(len=*)                       :: comp_name
-  integer,          intent(in)           :: index     !< to map stock element (water, heat, ..) to a name
+  integer,          intent(in)           :: idx     !< to map stock element (water, heat, ..) to a name
   real(r8_kind),    intent(in)           :: ref_value !< the stock value returned by the component per PE
   real(r8_kind),    intent(in)           :: radius
   integer,          intent(in), optional :: pelist(:)
@@ -4686,37 +4686,37 @@ subroutine stock_print(stck, Time, comp_name, index, ref_value, radius, pelist)
      if(comp_name == 'OCN') compInd = 4
 
 
-     if(f_valueDiagID(index,compInd) == initID) then
-        field_name = trim(comp_name) // trim(STOCK_NAMES(index))
+     if(f_valueDiagID(idx,compInd) == initID) then
+        field_name = trim(comp_name) // trim(STOCK_NAMES(idx))
         field_name  = trim(field_name) // 'StocksChange_Flux'
-        units = trim(STOCK_UNITS(index))
-        f_valueDiagID(index,compInd) = register_diag_field('stock_print', field_name, Time, &
+        units = trim(STOCK_UNITS(idx))
+        f_valueDiagID(idx,compInd) = register_diag_field('stock_print', field_name, Time, &
              units=units)
      endif
 
-     if(c_valueDiagID(index,compInd) == initID) then
-        field_name = trim(comp_name) // trim(STOCK_NAMES(index))
+     if(c_valueDiagID(idx,compInd) == initID) then
+        field_name = trim(comp_name) // trim(STOCK_NAMES(idx))
         field_name = trim(field_name) // 'StocksChange_Comp'
-        units = trim(STOCK_UNITS(index))
-        c_valueDiagID(index,compInd) = register_diag_field('stock_print', field_name, Time, &
+        units = trim(STOCK_UNITS(idx))
+        c_valueDiagID(idx,compInd) = register_diag_field('stock_print', field_name, Time, &
              units=units)
      endif
 
-     if(fmc_valueDiagID(index,compInd) == initID) then
-        field_name = trim(comp_name) // trim(STOCK_NAMES(index))
+     if(fmc_valueDiagID(idx,compInd) == initID) then
+        field_name = trim(comp_name) // trim(STOCK_NAMES(idx))
         field_name = trim(field_name) // 'StocksChange_Diff'
-        units = trim(STOCK_UNITS(index))
-        fmc_valueDiagID(index,compInd) = register_diag_field('stock_print', field_name, Time, &
+        units = trim(STOCK_UNITS(idx))
+        fmc_valueDiagID(idx,compInd) = register_diag_field('stock_print', field_name, Time, &
              units=units)
      endif
 
-     DiagID=f_valueDiagID(index,compInd)
+     DiagID=f_valueDiagID(idx,compInd)
      diagField = f_value
      if (DiagID > 0)  used = send_data(DiagID, diagField, Time = Time)
-     DiagID=c_valueDiagID(index,compInd)
+     DiagID=c_valueDiagID(idx,compInd)
      diagField = c_value
      if (DiagID > 0)  used = send_data(DiagID, diagField, Time)
-     DiagID=fmc_valueDiagID(index,compInd)
+     DiagID=fmc_valueDiagID(idx,compInd)
      diagField = f_value-c_value
      if (DiagID > 0)  used = send_data(DiagID, diagField, Time=Time)
 
@@ -4724,7 +4724,7 @@ subroutine stock_print(stck, Time, comp_name, index, ref_value, radius, pelist)
      call get_time(Time, isec, iday)
      hours = iday*24 + isec/3600
      formatString = '(a,a,a,i16,2x,es22.15,2x,es22.15,2x,es22.15)'
-     write(stocks_file,formatString) trim(comp_name),STOCK_NAMES(index),STOCK_UNITS(index) &
+     write(stocks_file,formatString) trim(comp_name),STOCK_NAMES(idx),STOCK_UNITS(idx) &
           ,hours,f_value,c_value,f_value-c_value
 
   endif
