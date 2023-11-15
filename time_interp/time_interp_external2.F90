@@ -917,37 +917,37 @@ subroutine load_record_0d(field, rec)
 end subroutine load_record_0d
 
 !> Reallocates src_data for field from module level loaded_fields array
-subroutine reset_src_data_region(index, is, ie, js, je)
-   integer, intent(in) :: index
+subroutine reset_src_data_region(idx, is, ie, js, je)
+   integer, intent(in) :: idx
    integer, intent(in) :: is, ie, js, je
    integer             :: nk, nbuf
 
-   if( is == loaded_fields(index)%is_src .AND. ie == loaded_fields(index)%ie_src .AND. &
-       js == loaded_fields(index)%js_src .AND. ie == loaded_fields(index)%je_src ) return
+   if( is == loaded_fields(idx)%is_src .AND. ie == loaded_fields(idx)%ie_src .AND. &
+       js == loaded_fields(idx)%js_src .AND. ie == loaded_fields(idx)%je_src ) return
 
-   if( .NOT. ASSOCIATED(loaded_fields(index)%src_data) ) call mpp_error(FATAL, &
-       "time_interp_external: field(index)%src_data is not associated")
-   nk = size(loaded_fields(index)%src_data,3)
-   nbuf = size(loaded_fields(index)%src_data,4)
-   deallocate(loaded_fields(index)%src_data)
-   allocate(loaded_fields(index)%src_data(is:ie,js:je,nk,nbuf))
-   loaded_fields(index)%is_src = is
-   loaded_fields(index)%ie_src = ie
-   loaded_fields(index)%js_src = js
-   loaded_fields(index)%je_src = je
+   if( .NOT. ASSOCIATED(loaded_fields(idx)%src_data) ) call mpp_error(FATAL, &
+       "time_interp_external: field(idx)%src_data is not associated")
+   nk = size(loaded_fields(idx)%src_data,3)
+   nbuf = size(loaded_fields(idx)%src_data,4)
+   deallocate(loaded_fields(idx)%src_data)
+   allocate(loaded_fields(idx)%src_data(is:ie,js:je,nk,nbuf))
+   loaded_fields(idx)%is_src = is
+   loaded_fields(idx)%ie_src = ie
+   loaded_fields(idx)%js_src = js
+   loaded_fields(idx)%je_src = je
 
 
 end subroutine reset_src_data_region
 
-subroutine set_override_region(index, region_type, is_region, ie_region, js_region, je_region)
-   integer, intent(in) :: index, region_type
+subroutine set_override_region(idx, region_type, is_region, ie_region, js_region, je_region)
+   integer, intent(in) :: idx, region_type
    integer, intent(in) :: is_region, ie_region, js_region, je_region
 
-   loaded_fields(index)%region_type = region_type
-   loaded_fields(index)%is_region   = is_region
-   loaded_fields(index)%ie_region   = ie_region
-   loaded_fields(index)%js_region   = js_region
-   loaded_fields(index)%je_region   = je_region
+   loaded_fields(idx)%region_type = region_type
+   loaded_fields(idx)%is_region   = is_region
+   loaded_fields(idx)%ie_region   = ie_region
+   loaded_fields(idx)%js_region   = js_region
+   loaded_fields(idx)%je_region   = je_region
 
    return
 
@@ -1048,48 +1048,48 @@ end function find_buf_index
 !> Returns size of field after call to init_external_field.
 !! Ordering is X/Y/Z/T.
 !! This call only makes sense for non-distributed reads.
-function get_external_field_size(index)
+function get_external_field_size(idx)
 
-    integer :: index !< returned from previous call to init_external_field.
+    integer :: idx !< returned from previous call to init_external_field.
     integer :: get_external_field_size(4)
 
-    if (index .lt. 1 .or. index .gt. num_fields) &
+    if (idx .lt. 1 .or. idx .gt. num_fields) &
         call mpp_error(FATAL,'invalid index in call to get_external_field_size')
 
 
-    get_external_field_size(1) = loaded_fields(index)%siz(1)
-    get_external_field_size(2) = loaded_fields(index)%siz(2)
-    get_external_field_size(3) = loaded_fields(index)%siz(3)
-    get_external_field_size(4) = loaded_fields(index)%siz(4)
+    get_external_field_size(1) = loaded_fields(idx)%siz(1)
+    get_external_field_size(2) = loaded_fields(idx)%siz(2)
+    get_external_field_size(3) = loaded_fields(idx)%siz(3)
+    get_external_field_size(4) = loaded_fields(idx)%siz(4)
 
 end function get_external_field_size
 
 !> return missing value
-function get_external_field_missing(index)
+function get_external_field_missing(idx)
 
-    integer :: index !< returned from previous call to init_external_field.
+    integer :: idx !< returned from previous call to init_external_field.
     real(r8_kind) :: get_external_field_missing
 
-    if (index .lt. 1 .or. index .gt. num_fields) &
+    if (idx .lt. 1 .or. idx .gt. num_fields) &
         call mpp_error(FATAL,'invalid index in call to get_external_field_size')
 
 
-    get_external_field_missing = loaded_fields(index)%missing
+    get_external_field_missing = loaded_fields(idx)%missing
 
 end function get_external_field_missing
 
-subroutine get_time_axis(index, time)
-  integer        , intent(in)  :: index   !< field id
+subroutine get_time_axis(idx, time)
+  integer        , intent(in)  :: idx   !< field id
   type(time_type), intent(out) :: time(:) !< array of time values to be filled
 
   integer :: n !< size of the data to be assigned
 
-  if (index < 1.or.index > num_fields) &
+  if (idx < 1.or.idx > num_fields) &
        call mpp_error(FATAL,'invalid index in call to get_time_axis')
 
-  n = min(size(time),size(loaded_fields(index)%time))
+  n = min(size(time),size(loaded_fields(idx)%time))
 
-  time(1:n) = loaded_fields(index)%time(1:n)
+  time(1:n) = loaded_fields(idx)%time(1:n)
 end subroutine
 
 
