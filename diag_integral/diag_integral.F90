@@ -639,10 +639,10 @@ end function set_axis_time
 !! @param [in] <name> Name associated with an integral
 !! @param [out] <index>
 !!
-function get_field_index (name) result (index)
+function get_field_index (name) result (idx)
 
 character(len=*),  intent(in) :: name !< Name associated with an integral
-integer                       :: index
+integer                       :: idx
 
 !-------------------------------------------------------------------------------
 ! local variables:
@@ -661,11 +661,11 @@ integer                       :: index
 !    with the index. if not found index will be 0 upon return, which
 !    initiates error condition.
 !-------------------------------------------------------------------------------
-      index = 0
+      idx = 0
       do i = 1, num_field
         if (name(1:nc) ==     &
                        field_name(i) (1:len_trim(field_name(i))) ) then
-          index = i
+          idx = i
           exit
         endif
       end do
