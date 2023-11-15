@@ -210,7 +210,7 @@ subroutine compressed_write_2d(fileobj, variable_name, cdata, unlim_dim_level, &
 
   character(len=200) :: append_error_msg !< Msg to be appended to FATAL error message
 
-  integer :: index(1) !< index of the PE in the pelist
+  integer :: idx(1) !< index of the PE in the pelist
 
   integer :: is !< Starting index of the first dimension
   integer :: ie !< Ending index of the first dimension
@@ -246,10 +246,10 @@ subroutine compressed_write_2d(fileobj, variable_name, cdata, unlim_dim_level, &
   endif
 
   c(:) = 1
-  index = FINDLOC(fileobj%pelist, mpp_pe())
+  idx = FINDLOC(fileobj%pelist, mpp_pe())
 
-  c(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_corner(index(1))
-  e(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_nelems(index(1))
+  c(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_corner(idx(1))
+  e(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_nelems(idx(1))
 
   if (compressed_dim_index(1) .eq. 1) then
     is = c(compressed_dim_index(1))
@@ -331,7 +331,7 @@ subroutine compressed_write_3d(fileobj, variable_name, cdata, unlim_dim_level, &
   character(len=200) :: append_error_msg !< Msg to be appended to FATAL error message
   class(*), pointer :: cdata_dummy(:,:,:,:)
 
-  integer :: index(1) !< index of the PE in the pelist
+  integer :: idx(1) !< index of the PE in the pelist
 
   integer :: is !< Starting index of the first dimension
   integer :: ie !< Ending index of the first dimension
@@ -370,10 +370,10 @@ subroutine compressed_write_3d(fileobj, variable_name, cdata, unlim_dim_level, &
   endif
 
   c(:) = 1
-  index = FINDLOC(fileobj%pelist, mpp_pe())
+  idx = FINDLOC(fileobj%pelist, mpp_pe())
 
-  c(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_corner(index(1))
-  e(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_nelems(index(1))
+  c(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_corner(idx(1))
+  e(compressed_dim_index(1)) = fileobj%compressed_dims(compressed_dim_index(2))%npes_nelems(idx(1))
 
   if (compressed_dim_index(1) .eq. 1) then
     is = c(compressed_dim_index(1))
