@@ -784,17 +784,17 @@ end function get_tracer_index_integer
 
 !#######################################################################
 !> @brief Checks if tracer is present, and returns it's position in index
-function get_tracer_index_logical(model, name, index, indices, verbose)
+function get_tracer_index_logical(model, name, idx, indices, verbose)
 
 integer, intent(in)                         :: model !< Parameter for which model is used
 character(len=*), intent(in)                :: name !< name of given drifter
-integer, intent(out)                        :: index !< returned drifter index
+integer, intent(out)                        :: idx !< returned drifter index
 integer, intent(in), dimension(:), optional :: indices !< optional list of indices to limit results to
 logical, intent(in), optional               :: verbose !< debug flag
 logical :: get_tracer_index_logical
 
-index = get_tracer_index_integer(model, name, indices, verbose)
-if(index == NO_TRACER) then
+idx = get_tracer_index_integer(model, name, indices, verbose)
+if(idx == NO_TRACER) then
   get_tracer_index_logical = .false.
 else
   get_tracer_index_logical = .true.
@@ -1118,7 +1118,7 @@ character(len=*), intent(in)           :: name !< Tracer name
 character(len=*), intent(in), optional :: longname !< Long name of the tracer
 character(len=*), intent(in), optional :: units !< Units for the tracer
 
-integer :: n, index
+integer :: n, idx
 logical :: success
 character(len=128) :: list_name
 
@@ -1145,10 +1145,10 @@ if ( get_tracer_index(model,name,n) ) then
   if ( fm_exists(list_name)) then
     success = fm_change_list(list_name)
     if ( present(longname) ) then
-      if ( longname .ne. "" ) index = fm_new_value('longname',longname)
+      if ( longname .ne. "" ) idx = fm_new_value('longname',longname)
     endif
     if ( present(units) ) then
-      if (units .ne. "" ) index = fm_new_value('units',units)
+      if (units .ne. "" ) idx = fm_new_value('units',units)
     endif
   endif
 
@@ -1167,7 +1167,7 @@ character(len=*), intent(in)           :: method_type !< type of method to be se
 character(len=*), intent(in)           :: method_name !< name of method to be set
 character(len=*), intent(in)           :: method_control !< control parameters of the given method
 
-integer :: n, num_method, index
+integer :: n, num_method, idx
 logical :: success
 character(len=128) :: list_name
 
@@ -1195,7 +1195,7 @@ if ( get_tracer_index(model,name,n) ) then
     list_name = trim(list_name)//"/"//trim(method_type)
     if ( fm_exists(list_name)) then
       success = fm_change_list(list_name)
-      index = fm_new_value(method_type,method_control)
+      idx = fm_new_value(method_type,method_control)
     endif
   else
     call mpp_error(NOTE,'set_tracer_method : Trying to set a method for non-existent tracer : '//trim(name))
