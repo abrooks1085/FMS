@@ -491,7 +491,7 @@ end type field_names_type_short
 !> @ingroup field_manager_mod
 type, private :: field_def
   character (len=fm_field_name_len)                   :: name
-  integer                                             :: index
+  integer                                             :: idx
   type (field_def), pointer                           :: parent => NULL()
   integer                                             :: field_type
   integer                                             :: length
@@ -1595,7 +1595,7 @@ parent_p%last_field => list_p
 !        Update the length for the parent
 parent_p%length = parent_p%length + 1
 !        Set the new index as the return value
-list_p%index = parent_p%length
+list_p%idx = parent_p%length
 !        set the pointer to the parent list
 list_p%parent => parent_p
 
@@ -2127,8 +2127,8 @@ end function fm_exists
 !! Otherwise the named field will be relative to the current list.
 !> @returns index of the named field if it exists, otherwise the parameter NO_FIELD
 function  fm_get_index(name)                        &
-          result (index)
-integer        :: index
+          result (idx)
+integer        :: idx
 character(len=*), intent(in) :: name !< The name of a field that the user wishes to get an index for
 
 type (field_def), pointer, save :: temp_field_p
@@ -2141,16 +2141,16 @@ if (.not. module_is_initialized) then
 endif
 !        Must supply a field field name
 if (name .eq. ' ') then
-  index = NO_FIELD
+  idx = NO_FIELD
   return
 endif
 !        Get a pointer to the field
 temp_field_p => get_field(name, current_list_p)
 if (associated(temp_field_p)) then
 !        Set the index
-  index = temp_field_p%index
+  idx = temp_field_p%idx
 else
-  index = NO_FIELD
+  idx = NO_FIELD
 endif
 
 end function  fm_get_index
@@ -2450,13 +2450,13 @@ end function  fm_get_value_string
 !> Iterates through the given list
 !> @returns A flag to indicate whether the function operated with (FALSE)
 !! or without (TRUE) errors
-function  fm_loop_over_list_old(list, name, field_type, index)        &
+function  fm_loop_over_list_old(list, name, field_type, idx)        &
           result (success)
 logical                                      :: success
 character(len=*),                intent(in)  :: list !< Name of a list to loop over
 character(len=*),                intent(out) :: name !< name of a field from list
 character(len=fm_type_name_len), intent(out) :: field_type !< type of a list entry
-integer,                         intent(out) :: index !< index of the field within the list
+integer,                         intent(out) :: idx !< index of the field within the list
 
 integer                         :: out_unit
 
@@ -2503,12 +2503,12 @@ function  set_list_stuff()                                                &
   if (associated(loop_list_p)) then
     name = loop_list_p%name
     field_type = field_type_name(loop_list_p%field_type)
-    index = loop_list_p%index
+    idx = loop_list_p%idx
     success = .true.
   else
     name = ' '
     field_type = ' '
-    index = 0
+    idx = 0
     success = .false.
     loop_list = ' '
   endif
@@ -2536,24 +2536,24 @@ end subroutine fm_init_loop
 !> given a list iterator, returns information about curren list element
 !! and advances the iterator to the next list element. At the end of the
 !! list, returns FALSE
-function fm_loop_over_list_new(iter, name, field_type, index) &
+function fm_loop_over_list_new(iter, name, field_type, idx) &
          result (success) ; logical success
   type (fm_list_iter_type), intent(inout) :: iter !< list iterator
   character(len=*), intent(out) :: name       !< name of the current list item
   character(len=*), intent(out) :: field_type !< type of the field
-  integer         , intent(out) :: index      !< index in the list
+  integer         , intent(out) :: idx      !< index in the list
 
   if (.not.module_is_initialized) call initialize
   if (associated(iter%ptr)) then
      name       = iter%ptr%name
      field_type = field_type_name(iter%ptr%field_type)
-     index      = iter%ptr%index
+     idx      = iter%ptr%idx
      success    = .TRUE.
      iter%ptr => iter%ptr%next
   else
      name       = ' '
      field_type = ' '
-     index      = 0
+     idx      = 0
      success    = .FALSE.
   endif
 end function fm_loop_over_list_new
@@ -2564,8 +2564,8 @@ end function fm_loop_over_list_new
 !! error occurs return the parameter NO_FIELD.
 !> @return integer index of the newly created list
 function  fm_new_list(name, create, keep)                        &
-          result (index)
-integer                                :: index
+          result (idx)
+integer                                :: idx
 character(len=*), intent(in)           :: name !< Name of a list that user wishes to create
 logical,          intent(in), optional :: create !< If present and true, create the list if it does not exist
 logical,          intent(in), optional :: keep !< If present and true, make this list the current list
@@ -2584,7 +2584,7 @@ if (.not. module_is_initialized) then
 endif
 !        Must supply a field list name
 if (name .eq. ' ') then
-  index = NO_FIELD
+  idx = NO_FIELD
   return
 endif
 !        Check for optional arguments
@@ -2612,12 +2612,12 @@ if (associated(temp_list_p)) then
     if (keep_t) then
       current_list_p => temp_list_p
     endif
-    index = temp_list_p%index
+    idx = temp_list_p%idx
   else
-    index = NO_FIELD
+    idx = NO_FIELD
   endif
 else
-  index = NO_FIELD
+  idx = NO_FIELD
 endif
 
 end function  fm_new_list
@@ -2751,7 +2751,7 @@ if (associated(temp_list_p)) then
         temp_field_p%max_index = index_t
       endif
     endif
-    field_index = temp_field_p%index
+    field_index = temp_field_p%idx
 
   else
     field_index = NO_FIELD
@@ -2886,7 +2886,7 @@ if (associated(temp_list_p)) then
         temp_field_p%max_index = index_t
       endif
     endif
-    field_index = temp_field_p%index
+    field_index = temp_field_p%idx
   else
     field_index = NO_FIELD
   endif
@@ -3019,7 +3019,7 @@ if (associated(temp_list_p)) then
         temp_field_p%max_index = index_t
       endif
     endif
-    field_index = temp_field_p%index
+    field_index = temp_field_p%idx
   else
 !        Error in making the field
     field_index = NO_FIELD
@@ -3155,7 +3155,7 @@ if (.not. module_is_initialized) then
   field_type_name(string_type) = 'string'
 
   root%name = ' '
-  root%index = 1
+  root%idx = 1
   root%parent => root_p
 
   root%field_type = list_type
@@ -3393,8 +3393,8 @@ end subroutine concat_strings
 !! the old field with a suffix supplied by the user.
 !! @return index of the field that has been created by the copy
 function fm_copy_list(list_name, suffix, create ) &
-         result(index)
-integer        :: index
+         result(idx)
+integer        :: idx
 character(len=*), intent(in)           :: list_name !< name of a field that the user wishes to copy
 character(len=*), intent(in)           :: suffix !< suffix that will be added to list_name when
                                                  !! field is copied
@@ -3449,7 +3449,7 @@ if (success) then
   found_methods = fm_find_methods(trim(list_name), method, control)
   do n = 1, size(method)
     if (LEN_TRIM(method(n)) > 0 ) then
-      index = fm_new_list(trim(list_name_new)//list_sep//method(n), create = create)
+      idx = fm_new_list(trim(list_name_new)//list_sep//method(n), create = create)
       call find_base(method(n), head, tail)
       temp_field_p => find_list(trim(list_name)//list_sep//head,temp_list_p, .false.)
       temp_field_p => find_field(tail,temp_field_p)

@@ -231,7 +231,7 @@ if (associated(temp_list_p)) then
         temp_field_p%max_index = index_t
       endif
     endif
-    field_index = temp_field_p%index
+    field_index = temp_field_p%idx
   else
 !        Error in making the field
     field_index = NO_FIELD
