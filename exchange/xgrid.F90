@@ -342,7 +342,7 @@ type grid_type
   integer                         :: last                       !< xgrid index range
   integer                         :: first_get              !< xgrid index range for get_2_from_xgrid
   integer                         :: last_get               !< xgrid index range for get_2_from_xgrid
-  integer                         :: size                             !< # xcell patterns
+  integer                         :: isize                            !< # xcell patterns
   type(xcell_type), pointer       :: x(:) =>NULL()                    !< xcell patterns
   integer                         :: size_repro                       !< # side 1 patterns for repro
   type(xcell_type), pointer       :: x_repro(:) =>NULL()              !< side 1 patterns for repro
@@ -412,7 +412,7 @@ end type comm_type
 !> @ingroup xgrid_mod
 type xmap_type
   private
-  integer :: size            !< # of exchange grid cells with area > 0 on this pe
+  integer :: isize           !< # of exchange grid cells with area > 0 on this pe
   integer :: size_put1       !< # of exchange grid cells for put_1_to_xgrid
   integer :: size_get2       !< # of exchange grid cells for get_2_to_xgrid
   integer :: me, npes, root_pe
@@ -1050,12 +1050,12 @@ logical,          intent(in)           :: use_higher_order
   call mpp_clock_begin(id_load_xgrid5)
 
 
-  size_prev = grid%size
+  size_prev = grid%isize
 
   if(grid%tile_me == tile2) then
      do l=1,nxgrid2
         if (in_box_me(i2(l), j2(l), grid) ) then
-           grid%size = grid%size + 1
+           grid%isize = grid%isize + 1
            ! exclude the area overlapped with parent grid
            if( grid1_id .NE. "ATM" .OR. tile1 .NE. tile_parent .OR.  &
                 .NOT. in_box(i1(l), j1(l), is_parent, ie_parent, js_parent, je_parent) ) then
@@ -1077,17 +1077,17 @@ logical,          intent(in)           :: use_higher_order
      end do
    end if
 
-  if(grid%size > size_prev) then
+  if(grid%isize > size_prev) then
      if(size_prev > 0) then ! need to extend data
         allocate(x_local(size_prev))
         x_local = grid%x
         if(ASSOCIATED(grid%x)) deallocate(grid%x)
-        allocate( grid%x( grid%size ) )
+        allocate( grid%x( grid%isize ) )
         grid%x(1:size_prev) = x_local
         deallocate(x_local)
      else
       if(ASSOCIATED(grid%x)) deallocate(grid%x) !< Check if allocated
-        allocate( grid%x( grid%size ) )
+        allocate( grid%x( grid%isize ) )
         grid%x%di = 0.0_r8_kind; grid%x%dj = 0.0_r8_kind
      end if
   end if
@@ -1730,7 +1730,7 @@ subroutine setup_xmap(xmap, grid_ids, grid_domains, grid_file, atm_grid, lnd_ug_
            allocate( grid%area    (grid%ls_me:grid%le_me,1) )
            allocate( grid%area_inv(grid%ls_me:grid%le_me,1) )
            grid%area       = 0.0_r8_kind
-           grid%size       = 0
+           grid%isize      = 0
            grid%size_repro = 0
         endif
      else if( grid%on_this_pe ) then
@@ -1739,7 +1739,7 @@ subroutine setup_xmap(xmap, grid_ids, grid_domains, grid_file, atm_grid, lnd_ug_
         allocate( grid%area    (grid%is_me:grid%ie_me, grid%js_me:grid%je_me) )
         allocate( grid%area_inv(grid%is_me:grid%ie_me, grid%js_me:grid%je_me) )
         grid%area       = 0.0_r8_kind
-        grid%size       = 0
+        grid%isize      = 0
         grid%size_repro = 0
      endif
 
@@ -1983,7 +1983,7 @@ subroutine setup_xmap(xmap, grid_ids, grid_domains, grid_file, atm_grid, lnd_ug_
      xmap%recv_count_repro = 0
      do g=2,size(xmap%grids(:))
         do p=0,xmap%npes-1
-           if(xmap%grids(g)%size >0) &
+           if(xmap%grids(g)%isize >0) &
                 xmap%send_count_repro(p) = xmap%send_count_repro(p) &
                 +count(xmap%grids(g)%x      (:)%pe==p+xmap%root_pe)
            if(xmap%grids(g)%size_repro >0) &
@@ -2002,10 +2002,10 @@ subroutine setup_xmap(xmap, grid_ids, grid_domains, grid_file, atm_grid, lnd_ug_
   if (associated(xmap%x2)) deallocate(xmap%x2) !< Check if allocated
   if (associated(xmap%x1_put)) deallocate(xmap%x1_put) !< Check if allocated
   if (associated(xmap%x2_get)) deallocate(xmap%x2_get) !< Check if allocated
-  allocate( xmap%x1(1:sum(xmap%grids(2:size(xmap%grids(:)))%size)) )
-  allocate( xmap%x2(1:sum(xmap%grids(2:size(xmap%grids(:)))%size)) )
-  allocate( xmap%x1_put(1:sum(xmap%grids(2:size(xmap%grids(:)))%size)) )
-  allocate( xmap%x2_get(1:sum(xmap%grids(2:size(xmap%grids(:)))%size)) )
+  allocate( xmap%x1(1:sum(xmap%grids(2:size(xmap%grids(:)))%isize)) )
+  allocate( xmap%x2(1:sum(xmap%grids(2:size(xmap%grids(:)))%isize)) )
+  allocate( xmap%x1_put(1:sum(xmap%grids(2:size(xmap%grids(:)))%isize)) )
+  allocate( xmap%x2_get(1:sum(xmap%grids(2:size(xmap%grids(:)))%isize)) )
 
   !--- The following will setup indx to be used in regen
   if (associated(xmap%get1)) deallocate(xmap%get1) !< Check if allocated
@@ -2264,7 +2264,7 @@ subroutine set_comm_get1_repro(xmap)
 
      do g=2,size(xmap%grids(:))
         im = xmap%grids(g)%im
-        do l=1,xmap%grids(g)%size ! index into this side 2 grid's patterns
+        do l=1,xmap%grids(g)%isize ! index into this side 2 grid's patterns
            p = xmap%grids(g)%x(l)%pe-xmap%root_pe
            n = send_ind(p)
            cnt(n) = cnt(n) + 1
@@ -2323,7 +2323,7 @@ subroutine set_comm_get1(xmap)
 
   max_size = 0
   do g=2,size(xmap%grids(:))
-    max_size = max_size + xmap%grids(g)%size
+    max_size = max_size + xmap%grids(g)%isize
   enddo
   comm => xmap%get1
   grid1 => xmap%grids(1)
@@ -2349,7 +2349,7 @@ subroutine set_comm_get1(xmap)
      !--- find the recv_indx
      ll = 0
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size
+        do l=1,xmap%grids(g)%isize
            i1 = xmap%grids(g)%x(l)%i1
            j1 = xmap%grids(g)%x(l)%j1
            tile1 = xmap%grids(g)%x(l)%tile
@@ -2386,7 +2386,7 @@ subroutine set_comm_get1(xmap)
      ll = 0
 
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size
+        do l=1,xmap%grids(g)%isize
            i1 = xmap%grids(g)%x(l)%i1
            j1 = xmap%grids(g)%x(l)%j1
            tile1 = xmap%grids(g)%x(l)%tile
@@ -2432,7 +2432,7 @@ subroutine set_comm_get1(xmap)
 
      ll = 0
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size
+        do l=1,xmap%grids(g)%isize
            ll = ll + 1
            p = pe_side1(ll)
            xmap%ind_get1(ll) = pos_x(p) + xmap%ind_get1(ll)
@@ -2637,7 +2637,7 @@ subroutine set_comm_put1(xmap)
 
   max_size = 0
   do g=2,size(xmap%grids(:))
-     max_size = max_size + xmap%grids(g)%size
+     max_size = max_size + xmap%grids(g)%isize
   enddo
   grid1 => xmap%grids(1)
   comm%nsend = 0
@@ -2661,7 +2661,7 @@ subroutine set_comm_put1(xmap)
      !--- find the recv_indx
      ll = 0
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size
+        do l=1,xmap%grids(g)%isize
            i1 = xmap%grids(g)%x(l)%i1
            j1 = xmap%grids(g)%x(l)%j1
            tile1 = xmap%grids(g)%x(l)%tile
@@ -2695,7 +2695,7 @@ subroutine set_comm_put1(xmap)
      ll = 0
 
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size
+        do l=1,xmap%grids(g)%isize
            i1 = xmap%grids(g)%x(l)%i1
            j1 = xmap%grids(g)%x(l)%j1
            tile1 = xmap%grids(g)%x(l)%tile
@@ -2741,7 +2741,7 @@ subroutine set_comm_put1(xmap)
 
      ll = 0
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size
+        do l=1,xmap%grids(g)%isize
            i1 = xmap%grids(g)%x(l)%i1
            j1 = xmap%grids(g)%x(l)%j1
            tile1 = xmap%grids(g)%x(l)%tile
@@ -2914,7 +2914,7 @@ type (xmap_type), intent(inout) :: xmap
   max_size = 0
 
   do g=2,size(xmap%grids(:))
-    max_size = max_size + xmap%grids(g)%size * xmap%grids(g)%km
+    max_size = max_size + xmap%grids(g)%isize * xmap%grids(g)%km
   end do
 
   if (max_size>size(xmap%x1(:))) then
@@ -2930,12 +2930,12 @@ type (xmap_type), intent(inout) :: xmap
     xmap%grids(g)%last  = 0
   end do
 
-  xmap%size = 0
+  xmap%isize = 0
   ll = 0
   do g=2,size(xmap%grids(:))
-     xmap%grids(g)%first = xmap%size + 1;
+     xmap%grids(g)%first = xmap%isize + 1;
 
-     do l=1,xmap%grids(g)%size
+     do l=1,xmap%grids(g)%isize
         i1 = xmap%grids(g)%x(l)%i1
         j1 = xmap%grids(g)%x(l)%j1
         i2 = xmap%grids(g)%x(l)%i2
@@ -2946,43 +2946,43 @@ type (xmap_type), intent(inout) :: xmap
            do k=1,xmap%grids(g)%km
               lll = xmap%grids(g)%l_index((j2-1)*xmap%grids(g)%im+i2)
               if (xmap%grids(g)%frac_area(lll,1,k)/=0.0_r8_kind) then
-              xmap%size = xmap%size+1
-              xmap%x1(xmap%size)%pos  = xmap%ind_get1(ll)
-              xmap%x1(xmap%size)%i    = xmap%grids(g)%x(l)%i1
-              xmap%x1(xmap%size)%j    = xmap%grids(g)%x(l)%j1
-              xmap%x1(xmap%size)%tile = xmap%grids(g)%x(l)%tile
-              xmap%x1(xmap%size)%area = xmap%grids(g)%x(l)%area &
+              xmap%isize = xmap%isize+1
+              xmap%x1(xmap%isize)%pos  = xmap%ind_get1(ll)
+              xmap%x1(xmap%isize)%i    = xmap%grids(g)%x(l)%i1
+              xmap%x1(xmap%isize)%j    = xmap%grids(g)%x(l)%j1
+              xmap%x1(xmap%isize)%tile = xmap%grids(g)%x(l)%tile
+              xmap%x1(xmap%isize)%area = xmap%grids(g)%x(l)%area &
                    *xmap%grids(g)%frac_area(lll,1,k)
-              xmap%x1(xmap%size)%di   = xmap%grids(g)%x(l)%di
-              xmap%x1(xmap%size)%dj   = xmap%grids(g)%x(l)%dj
-              xmap%x2(xmap%size)%i    = xmap%grids(g)%x(l)%i2
-              xmap%x2(xmap%size)%j    = xmap%grids(g)%x(l)%j2
-              xmap%x2(xmap%size)%l    = lll
-              xmap%x2(xmap%size)%k    = k
-              xmap%x2(xmap%size)%area = xmap%grids(g)%x(l)%area * xmap%grids(g)%x(l)%scale
+              xmap%x1(xmap%isize)%di   = xmap%grids(g)%x(l)%di
+              xmap%x1(xmap%isize)%dj   = xmap%grids(g)%x(l)%dj
+              xmap%x2(xmap%isize)%i    = xmap%grids(g)%x(l)%i2
+              xmap%x2(xmap%isize)%j    = xmap%grids(g)%x(l)%j2
+              xmap%x2(xmap%isize)%l    = lll
+              xmap%x2(xmap%isize)%k    = k
+              xmap%x2(xmap%isize)%area = xmap%grids(g)%x(l)%area * xmap%grids(g)%x(l)%scale
               endif
            enddo
         else
            do k=1,xmap%grids(g)%km
               if (xmap%grids(g)%frac_area(i2,j2,k)/=0.0_r8_kind) then
-              xmap%size = xmap%size+1
-              xmap%x1(xmap%size)%pos  = xmap%ind_get1(ll)
-              xmap%x1(xmap%size)%i    = xmap%grids(g)%x(l)%i1
-              xmap%x1(xmap%size)%j    = xmap%grids(g)%x(l)%j1
-              xmap%x1(xmap%size)%tile = xmap%grids(g)%x(l)%tile
-              xmap%x1(xmap%size)%area = xmap%grids(g)%x(l)%area &
+              xmap%isize = xmap%isize+1
+              xmap%x1(xmap%isize)%pos  = xmap%ind_get1(ll)
+              xmap%x1(xmap%isize)%i    = xmap%grids(g)%x(l)%i1
+              xmap%x1(xmap%isize)%j    = xmap%grids(g)%x(l)%j1
+              xmap%x1(xmap%isize)%tile = xmap%grids(g)%x(l)%tile
+              xmap%x1(xmap%isize)%area = xmap%grids(g)%x(l)%area &
                    *xmap%grids(g)%frac_area(i2,j2,k)
-              xmap%x1(xmap%size)%di   = xmap%grids(g)%x(l)%di
-              xmap%x1(xmap%size)%dj   = xmap%grids(g)%x(l)%dj
-              xmap%x2(xmap%size)%i    = xmap%grids(g)%x(l)%i2
-              xmap%x2(xmap%size)%j    = xmap%grids(g)%x(l)%j2
-              xmap%x2(xmap%size)%k    = k
-              xmap%x2(xmap%size)%area = xmap%grids(g)%x(l)%area * xmap%grids(g)%x(l)%scale
+              xmap%x1(xmap%isize)%di   = xmap%grids(g)%x(l)%di
+              xmap%x1(xmap%isize)%dj   = xmap%grids(g)%x(l)%dj
+              xmap%x2(xmap%isize)%i    = xmap%grids(g)%x(l)%i2
+              xmap%x2(xmap%isize)%j    = xmap%grids(g)%x(l)%j2
+              xmap%x2(xmap%isize)%k    = k
+              xmap%x2(xmap%isize)%area = xmap%grids(g)%x(l)%area * xmap%grids(g)%x(l)%scale
               end if
            enddo
         end if
      end do
-     xmap%grids(g)%last = xmap%size
+     xmap%grids(g)%last = xmap%isize
   end do
 
 
@@ -3006,7 +3006,7 @@ type (xmap_type), intent(inout) :: xmap
   do g=2,size(xmap%grids(:))
      xmap%grids(g)%first_get = xmap%size_get2 + 1;
 
-     do l=1,xmap%grids(g)%size
+     do l=1,xmap%grids(g)%isize
         i1 = xmap%grids(g)%x(l)%i1
         j1 = xmap%grids(g)%x(l)%j1
         i2 = xmap%grids(g)%x(l)%i2
@@ -3083,7 +3083,7 @@ type (xmap_type), intent(inout) :: xmap
         endif
      enddo
      do g=2,size(xmap%grids(:))
-        do l=1,xmap%grids(g)%size ! index into this side 2 grid's patterns
+        do l=1,xmap%grids(g)%isize ! index into this side 2 grid's patterns
            p = xmap%grids(g)%x(l)%pe-xmap%root_pe
            n = send_ind(p)
            cnt(n) = cnt(n) + 1
@@ -3176,7 +3176,7 @@ end subroutine  set_frac_area_ug
 integer function xgrid_count(xmap)
 type (xmap_type), intent(inout) :: xmap
 
-  xgrid_count = xmap%size
+  xgrid_count = xmap%isize
 end function xgrid_count
 
 !#######################################################################
@@ -3411,7 +3411,7 @@ logical, dimension(:),      intent(out) :: some_arr !< logical associating excha
 
   if (.not.present(grid_id)) then
 
-    if(xmap%size > 0) then
+    if(xmap%isize > 0) then
        some_arr = .true.
     else
        some_arr = .false.
@@ -3817,7 +3817,7 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
   type (xmap_type),               intent(inout) :: xmap
   integer,                        intent(in)    :: isize, jsize, xsize, lsize
 
-  real(r8_kind), dimension(xmap%size), target :: dg(xmap%size, lsize)
+  real(r8_kind), dimension(xmap%isize), target :: dg(xmap%isize, lsize)
   integer                                     :: i, j, l, p, n, m
   integer                                     :: msgsize, buffer_pos, pos
   integer                                     :: istart, iend, icount
@@ -3849,7 +3849,7 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
 !$OMP parallel do default(none) shared(lsize,xmap,dg,x_addrs) private(dgp,ptr_x)
   do l = 1, lsize
      ptr_x = x_addrs(l)
-     do i=1,xmap%size
+     do i=1,xmap%isize
         dgp => dg(xmap%x1(i)%pos,l)
         dgp =  dgp + xmap%x1(i)%area*x(i)
      enddo
@@ -4053,7 +4053,7 @@ real(r8_kind), dimension(3)                  :: conservation_check_side1
 integer, intent(in), optional                :: remap_method
 
 
-  real(r8_kind), dimension(xmap%size)           :: x_over, x_back
+  real(r8_kind), dimension(xmap%isize)           :: x_over, x_back
   real(r8_kind), dimension(size(d,1),size(d,2)) :: d1
   real(r8_kind), dimension(:,:,:), allocatable  :: d2
   integer                                       :: g
@@ -4100,7 +4100,7 @@ real(r8_kind), dimension(3)                    :: conservation_check_side2
 integer, intent(in), optional                  :: remap_method
 
 
-  real(r8_kind), dimension(xmap%size)          :: x_over, x_back
+  real(r8_kind), dimension(xmap%isize)          :: x_over, x_back
   real(r8_kind), dimension(:,:  ), allocatable :: d1
   real(r8_kind), dimension(:,:,:), allocatable :: d2
   integer                                      :: g
@@ -4155,7 +4155,7 @@ type (xmap_type),                 intent(inout) :: xmap !< exchange grid
 real(r8_kind), dimension(3)                     :: conservation_check_ug_side1
 integer, intent(in), optional                   :: remap_method
 
-  real(r8_kind), dimension(xmap%size)           :: x_over, x_back
+  real(r8_kind), dimension(xmap%isize)           :: x_over, x_back
   real(r8_kind), dimension(size(d,1),size(d,2)) :: d1
   real(r8_kind), dimension(:,:,:), allocatable  :: d2
   real(r8_kind), dimension(:    ), allocatable  :: d_ug
@@ -4229,7 +4229,7 @@ real(r8_kind), dimension(3)                    :: conservation_check_ug_side2
 integer, intent(in),   optional                :: remap_method
 
 
-  real(r8_kind), dimension(xmap%size)          :: x_over, x_back
+  real(r8_kind), dimension(xmap%isize)          :: x_over, x_back
   real(r8_kind), dimension(:,:  ), allocatable :: d1, d_ug
   real(r8_kind), dimension(:,:,:), allocatable :: d2
   integer                                      :: g
@@ -5110,7 +5110,7 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
   type (xmap_type),               intent(inout) :: xmap
   integer,                        intent(in)    :: isize, xsize, lsize
 
-  real(r8_kind), dimension(xmap%size), target :: dg(xmap%size, lsize)
+  real(r8_kind), dimension(xmap%isize), target :: dg(xmap%isize, lsize)
   integer                                     :: i, j, l, p, n, m
   integer                                     :: msgsize, buffer_pos, pos
   integer                                     :: istart, iend, icount
@@ -5142,7 +5142,7 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
 !$OMP parallel do default(none) shared(lsize,xmap,dg,x_addrs) private(dgp,ptr_x)
   do l = 1, lsize
      ptr_x = x_addrs(l)
-     do i=1,xmap%size
+     do i=1,xmap%isize
         dgp => dg(xmap%x1(i)%pos,l)
         dgp =  dgp + xmap%x1(i)%area*x(i)
      enddo
