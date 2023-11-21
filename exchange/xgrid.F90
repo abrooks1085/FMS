@@ -386,7 +386,7 @@ end type x2_type
 !> Private type for overlap exchange grid data
 !> @ingroup xgrid_mod
 type overlap_type
-   integer                    :: count
+   integer                    :: icount
    integer                    :: pe
    integer                    :: buffer_pos
    integer,       allocatable :: i(:)
@@ -2224,10 +2224,10 @@ subroutine set_comm_get1_repro(xmap)
     pos = 0
     do n = 1, nrecv
       p = pe_ind(n)
-      comm%recv(n)%count = xmap%recv_count_repro(p)
+      comm%recv(n)%icount = xmap%recv_count_repro(p)
       comm%recv(n)%pe = p + xmap%root_pe
       comm%recv(n)%buffer_pos = pos
-      pos = pos + comm%recv(n)%count
+      pos = pos + comm%recv(n)%icount
     enddo
   endif
 
@@ -2252,14 +2252,14 @@ subroutine set_comm_get1_repro(xmap)
      cnt(:) = 0
      do n = 1, nsend
         p = pe_ind(n)
-        comm%send(n)%count = xmap%send_count_repro(p)
+        comm%send(n)%icount = xmap%send_count_repro(p)
         comm%send(n)%pe = p + xmap%root_pe
         comm%send(n)%buffer_pos = pos
-        pos = pos + comm%send(n)%count
-        allocate(comm%send(n)%i(comm%send(n)%count))
-        allocate(comm%send(n)%j(comm%send(n)%count))
-        allocate(comm%send(n)%g(comm%send(n)%count))
-        allocate(comm%send(n)%xLoc(comm%send(n)%count))
+        pos = pos + comm%send(n)%icount
+        allocate(comm%send(n)%i(comm%send(n)%icount))
+        allocate(comm%send(n)%j(comm%send(n)%icount))
+        allocate(comm%send(n)%g(comm%send(n)%icount))
+        allocate(comm%send(n)%xLoc(comm%send(n)%icount))
      enddo
 
      do g=2,size(xmap%grids(:))
@@ -2283,8 +2283,8 @@ subroutine set_comm_get1_repro(xmap)
      enddo
      !--- make sure the count is correct
      do n = 1, nsend
-        if( comm%send(n)%count .NE. cnt(n) ) call error_mesg('xgrid_mod', &
-             'comm%send(n)%count .NE. cnt(n)', FATAL)
+        if( comm%send(n)%icount .NE. cnt(n) ) call error_mesg('xgrid_mod', &
+             'comm%send(n)%icount .NE. cnt(n)', FATAL)
      enddo
    endif
 
@@ -2449,7 +2449,7 @@ subroutine set_comm_get1(xmap)
   if(nsend>0) then
    if (associated(comm%send)) deallocate(comm%send) !< Check if allocated
      allocate(comm%send(nsend))
-     comm%send(:)%count = 0
+     comm%send(:)%icount = 0
   endif
 
   pos = 0
@@ -2466,7 +2466,7 @@ subroutine set_comm_get1(xmap)
         pos = pos + 1
         allocate(comm%send(pos)%i(send_size(p)))
         comm%send(pos)%buffer_pos = send_buffer_pos(p)
-        comm%send(pos)%count = send_size(p)
+        comm%send(pos)%icount = send_size(p)
         comm%send(pos)%pe = pelist(p)
         comm%sendsize = comm%sendsize + send_size(p)
      endif
@@ -2525,7 +2525,7 @@ subroutine set_comm_get1(xmap)
   if(nrecv >0) then
    if (associated(comm%recv)) deallocate(comm%recv) !< Check if allocated
      allocate(comm%recv(nrecv))
-     comm%recv(:)%count = 0
+     comm%recv(:)%icount = 0
      !--- set up the buffer pos for each receiving
      buffer_pos = 0
      do p = 0, npes-1
@@ -2543,7 +2543,7 @@ subroutine set_comm_get1(xmap)
            allocate(comm%recv(pos)%tile(recv_size(p)))
            comm%recv(pos)%buffer_pos = recv_buffer_pos(p)
            comm%recv(pos)%pe = pelist(p)
-           comm%recv(pos)%count = recv_size(p)
+           comm%recv(pos)%icount = recv_size(p)
            comm%recvsize = comm%recvsize + recv_size(p)
            if(monotonic_exchange) then
               allocate(comm%recv(pos)%di(recv_size(p)))
@@ -2778,7 +2778,7 @@ subroutine set_comm_put1(xmap)
   if(nrecv>0) then
    if (associated(comm%recv)) deallocate(comm%recv) !< Check if allocated
      allocate(comm%recv(nrecv))
-     comm%recv(:)%count = 0
+     comm%recv(:)%icount = 0
   endif
   pos = 0
   comm%recvsize = 0
@@ -2794,7 +2794,7 @@ subroutine set_comm_put1(xmap)
         pos = pos + 1
         allocate(comm%recv(pos)%i(send_size(p)))
         comm%recv(pos)%buffer_pos = recv_buffer_pos(p)
-        comm%recv(pos)%count = send_size(p)
+        comm%recv(pos)%icount = send_size(p)
         comm%recv(pos)%pe = pelist(p)
         comm%recvsize = comm%recvsize + send_size(p)
      endif
@@ -2853,7 +2853,7 @@ subroutine set_comm_put1(xmap)
   if(nsend >0) then
    if (associated(comm%send)) deallocate(comm%send) !< Check if allocated
      allocate(comm%send(nsend))
-     comm%send(:)%count = 0
+     comm%send(:)%icount = 0
      pos = 0
      buffer_pos = 0
      do m=0,npes-1
@@ -2864,7 +2864,7 @@ subroutine set_comm_put1(xmap)
            allocate(comm%send(pos)%j(recv_size(p)))
            allocate(comm%send(pos)%tile(recv_size(p)))
            comm%send(pos)%pe = pelist(p)
-           comm%send(pos)%count = recv_size(p)
+           comm%send(pos)%icount = recv_size(p)
            comm%sendsize = comm%sendsize + recv_size(p)
            if(monotonic_exchange) then
               allocate(comm%send(pos)%di(recv_size(p)))
@@ -3491,7 +3491,7 @@ subroutine put_1_to_xgrid_order_1(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   integer,                        intent(in)    :: isize, jsize, xsize, lsize
 
   integer                         :: i, j, p, buffer_pos, msgsize
-  integer                         :: from_pe, to_pe, pos, n, l, count
+  integer                         :: from_pe, to_pe, pos, n, l, icount
   integer                         :: ibegin, istart, iend, start_pos
   type (comm_type), pointer, save :: comm =>NULL()
   real(r8_kind)                   :: recv_buffer(xmap%put1%recvsize*lsize)
@@ -3508,7 +3508,7 @@ subroutine put_1_to_xgrid_order_1(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   !--- pre-post receiving
   comm => xmap%put1
   do p = 1, comm%nrecv
-     msgsize = comm%recv(p)%count*lsize
+     msgsize = comm%recv(p)%icount*lsize
      from_pe = comm%recv(p)%pe
      buffer_pos = comm%recv(p)%buffer_pos*lsize
      call mpp_recv(recv_buffer(buffer_pos+1), glen=msgsize, from_pe = from_pe, block=.false., tag=COMM_TAG_7)
@@ -3517,12 +3517,12 @@ subroutine put_1_to_xgrid_order_1(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   !--- send the data
   buffer_pos = 0
   do p = 1, comm%nsend
-     msgsize = comm%send(p)%count*lsize
+     msgsize = comm%send(p)%icount*lsize
      to_pe = comm%send(p)%pe
      pos = buffer_pos
      do l = 1, lsize
         ptr_d = d_addrs(l)
-        do n = 1, comm%send(p)%count
+        do n = 1, comm%send(p)%icount
            pos = pos + 1
            i = comm%send(p)%i(n)
            j = comm%send(p)%j(n)
@@ -3544,14 +3544,14 @@ subroutine put_1_to_xgrid_order_1(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   else
      start_pos = 0
 !$OMP parallel do default(none) shared(lsize,x_addrs,comm,recv_buffer,xmap) &
-!$OMP                          private(ptr_x,count,ibegin,istart,iend,pos,unpack_buffer)
+!$OMP                          private(ptr_x,icount,ibegin,istart,iend,pos,unpack_buffer)
      do l = 1, lsize
         ptr_x = x_addrs(l)
         do p = 1, comm%nrecv
-           count = comm%recv(p)%count
+           icount = comm%recv(p)%icount
            ibegin = comm%recv(p)%buffer_pos*lsize + 1
-           istart = ibegin + (l-1)*count
-           iend = istart + count - 1
+           istart = ibegin + (l-1)*icount
+           iend = istart + icount - 1
            pos = comm%recv(p)%buffer_pos
            do n = istart, iend
               pos = pos + 1
@@ -3590,7 +3590,7 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   type (grid_type), pointer, save                       :: grid1 =>NULL()
   type (comm_type), pointer, save                       :: comm  =>NULL()
   integer                                               :: buffer_pos, msgsize, from_pe, to_pe, pos, n
-  integer                                               :: ibegin, count, istart, iend
+  integer                                               :: ibegin, icount, istart, iend
   real(r8_kind)                                         :: recv_buffer(xmap%put1%recvsize*lsize*3)
   real(r8_kind)                                         :: send_buffer(xmap%put1%sendsize*lsize*3)
   real(r8_kind)                                         :: unpack_buffer(xmap%put1%recvsize*3)
@@ -3643,7 +3643,7 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   buffer_pos = 0
   comm => xmap%put1
   do p = 1, comm%nrecv
-     msgsize = comm%recv(p)%count*lsize
+     msgsize = comm%recv(p)%icount*lsize
      buffer_pos = comm%recv(p)%buffer_pos*lsize
      if(.NOT. monotonic_exchange) then
         msgsize = msgsize*3
@@ -3681,11 +3681,11 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
   if(monotonic_exchange) then
      pos = 0
      do p = 1, comm%nsend
-        msgsize = comm%send(p)%count*lsize
+        msgsize = comm%send(p)%icount*lsize
         to_pe = comm%send(p)%pe
         do l = 1, lsize
            ptr_d = d_addrs(l)
-           do n = 1, comm%send(p)%count
+           do n = 1, comm%send(p)%icount
               pos = pos + 1
               i = comm%send(p)%i(n)
               j = comm%send(p)%j(n)
@@ -3697,12 +3697,12 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
      enddo
 
      do p = 1, comm%nsend
-        msgsize = comm%send(p)%count*lsize
+        msgsize = comm%send(p)%icount*lsize
         to_pe = comm%send(p)%pe
         pos = buffer_pos
         do l = 1, lsize
            ptr_d = d_addrs(l)
-           do n = 1, comm%send(p)%count
+           do n = 1, comm%send(p)%icount
               pos = pos + 1
               i = comm%send(p)%i(n)
               j = comm%send(p)%j(n)
@@ -3719,12 +3719,12 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
      enddo
   else
      do p = 1, comm%nsend
-        msgsize = comm%send(p)%count*lsize*3
+        msgsize = comm%send(p)%icount*lsize*3
         to_pe = comm%send(p)%pe
         pos = buffer_pos
         do l = 1, lsize
            ptr_d = d_addrs(l)
-           do n = 1, comm%send(p)%count
+           do n = 1, comm%send(p)%icount
               pos = pos + 3
               i = comm%send(p)%i(n)
               j = comm%send(p)%j(n)
@@ -3753,10 +3753,10 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
            ptr_x = x_addrs(l)
            pos = 0
            do p = 1, comm%nsend
-              count = comm%send(p)%count
+              icount = comm%send(p)%icount
               ibegin = comm%recv(p)%buffer_pos*lsize + 1
-              istart = ibegin + (l-1)*count
-              iend = istart + count - 1
+              istart = ibegin + (l-1)*icount
+              iend = istart + icount - 1
               pos = comm%recv(p)%buffer_pos
               do n = istart, iend
                  pos = pos + 1
@@ -3779,16 +3779,16 @@ subroutine put_1_to_xgrid_order_2(d_addrs, x_addrs, xmap, isize, jsize, xsize, l
         end do
      else
 !$OMP parallel do default(none) shared(lsize,comm,xmap,recv_buffer,x_addrs) &
-!$OMP                          private(ptr_x,pos,ibegin,istart,iend,count,unpack_buffer)
+!$OMP                          private(ptr_x,pos,ibegin,istart,iend,icount,unpack_buffer)
         do l = 1, lsize
            ptr_x = x_addrs(l)
            pos = 0
            ibegin = 1
            do p = 1, comm%nrecv
-              count = comm%recv(p)%count*3
+              icount = comm%recv(p)%icount*3
               ibegin = comm%recv(p)%buffer_pos*lsize*3 + 1
-              istart = ibegin + (l-1)*count
-              iend = istart + count - 1
+              istart = ibegin + (l-1)*icount
+              iend = istart + icount - 1
               pos =  comm%recv(p)%buffer_pos*3
               do n = istart, iend
                  pos = pos + 1
@@ -3820,7 +3820,7 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
   real(r8_kind), dimension(xmap%size), target :: dg(xmap%size, lsize)
   integer                                     :: i, j, l, p, n, m
   integer                                     :: msgsize, buffer_pos, pos
-  integer                                     :: istart, iend, count
+  integer                                     :: istart, iend, icount
   real(r8_kind)     , pointer, save           :: dgp =>NULL()
   type(grid_type)   , pointer, save           :: grid1 =>NULL()
   type(comm_type)   , pointer, save           :: comm  =>NULL()
@@ -3840,7 +3840,7 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
 
   do p = 1, comm%nrecv
      recv => comm%recv(p)
-     msgsize = recv%count*lsize
+     msgsize = recv%icount*lsize
      buffer_pos = recv%buffer_pos*lsize
      call mpp_recv(recv_buffer(buffer_pos+1), glen=msgsize, from_pe = recv%pe, block=.false., tag=COMM_TAG_9)
   enddo
@@ -3861,10 +3861,10 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
   istart = 1
   do p = 1, comm%nsend
      send => comm%send(p)
-     msgsize = send%count*lsize
+     msgsize = send%icount*lsize
      pos = buffer_pos
      istart = send%buffer_pos+1
-     iend = istart + send%count - 1
+     iend = istart + send%icount - 1
      do l = 1, lsize
         do n = istart, iend
            pos = pos + 1
@@ -3887,15 +3887,15 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
 
   do p = 1, comm%nrecv
      recv => comm%recv(p)
-     count = recv%count
+     icount = recv%icount
      buffer_pos = recv%buffer_pos*lsize
      if( recv%pe == xmap%me ) then
-!$OMP parallel do default(none) shared(lsize,recv,recv_buffer,buffer_pos,d_addrs,count) &
+!$OMP parallel do default(none) shared(lsize,recv,recv_buffer,buffer_pos,d_addrs,icount) &
 !$OMP                          private(ptr_d,i,j,pos)
         do l = 1, lsize
-           pos = buffer_pos + (l-1)*count
+           pos = buffer_pos + (l-1)*icount
            ptr_d = d_addrs(l)
-           do n = 1,count
+           do n = 1,icount
               i = recv%i(n)
               j = recv%j(n)
               pos = pos + 1
@@ -3917,9 +3917,9 @@ subroutine get_1_from_xgrid(d_addrs, x_addrs, xmap, isize, jsize, xsize, lsize)
 !$OMP parallel do default(none) shared(lsize,recv,recv_buffer,buffer_pos,d_addrs) &
 !$OMP                          private(ptr_d,i,j,pos)
      do l = 1, lsize
-        pos = buffer_pos + (l-1)*recv%count
+        pos = buffer_pos + (l-1)*recv%icount
         ptr_d = d_addrs(l)
-        do n = 1, recv%count
+        do n = 1, recv%icount
            i = recv%i(n)
            j = recv%j(n)
            pos = pos + 1
@@ -3969,12 +3969,12 @@ subroutine get_1_from_xgrid_repro(d_addrs, x_addrs, xmap, xsize, lsize)
   !--- pre-post receiving
   do p = 1, comm%nrecv
      recv => comm%recv(p)
-     msgsize = recv%count*lsize
+     msgsize = recv%icount*lsize
      buffer_pos = recv%buffer_pos*lsize
      call mpp_recv(recv_buffer(buffer_pos+1), glen=msgsize, from_pe = recv%pe, block=.false., tag=COMM_TAG_10)
      n = recv%pe -xmap%root_pe
      pl(n) = buffer_pos
-     ml(n) = recv%count
+     ml(n) = recv%icount
   enddo
 
   !pack the data
@@ -3986,7 +3986,7 @@ subroutine get_1_from_xgrid_repro(d_addrs, x_addrs, xmap, xsize, lsize)
      send => comm%send(p)
      do l = 1,lsize
         ptr_x = x_addrs(l)
-        do n = 1, send%count
+        do n = 1, send%icount
            i = send%i(n)
            j = send%j(n)
            g = send%g(n)
@@ -4004,7 +4004,7 @@ subroutine get_1_from_xgrid_repro(d_addrs, x_addrs, xmap, xsize, lsize)
 
   do p =1, comm%nsend
      buffer_pos = comm%send(p)%buffer_pos*lsize
-     msgsize = comm%send(p)%count*lsize
+     msgsize = comm%send(p)%icount*lsize
      call mpp_send(send_buffer(buffer_pos+1), plen=msgsize, to_pe=comm%send(p)%pe, tag=COMM_TAG_10)
   enddo
 
@@ -5006,7 +5006,7 @@ subroutine put_1_to_xgrid_ug_order_1(d_addrs, x_addrs, xmap, dsize, xsize, lsize
   integer,                        intent(in)    :: dsize, xsize, lsize
 
   integer                         :: i, p, buffer_pos, msgsize
-  integer                         :: from_pe, to_pe, pos, n, l, count
+  integer                         :: from_pe, to_pe, pos, n, l, icount
   integer                         :: ibegin, istart, iend, start_pos
   type (comm_type), pointer, save :: comm =>NULL()
   real(r8_kind)                   :: recv_buffer(xmap%put1%recvsize*lsize)
@@ -5024,7 +5024,7 @@ subroutine put_1_to_xgrid_ug_order_1(d_addrs, x_addrs, xmap, dsize, xsize, lsize
   !--- pre-post receiving
   comm => xmap%put1
   do p = 1, comm%nrecv
-     msgsize = comm%recv(p)%count*lsize
+     msgsize = comm%recv(p)%icount*lsize
      from_pe = comm%recv(p)%pe
      buffer_pos = comm%recv(p)%buffer_pos*lsize
      call mpp_recv(recv_buffer(buffer_pos+1), glen=msgsize, from_pe = from_pe, block=.false., tag=COMM_TAG_7)
@@ -5033,12 +5033,12 @@ subroutine put_1_to_xgrid_ug_order_1(d_addrs, x_addrs, xmap, dsize, xsize, lsize
   !--- send the data
   buffer_pos = 0
   do p = 1, comm%nsend
-     msgsize = comm%send(p)%count*lsize
+     msgsize = comm%send(p)%icount*lsize
      to_pe = comm%send(p)%pe
      pos = buffer_pos
      do l = 1, lsize
         ptr_d = d_addrs(l)
-        do n = 1, comm%send(p)%count
+        do n = 1, comm%send(p)%icount
            pos = pos + 1
            lll = comm%send(p)%i(n)
            send_buffer(pos) = d(lll)
@@ -5059,14 +5059,14 @@ subroutine put_1_to_xgrid_ug_order_1(d_addrs, x_addrs, xmap, dsize, xsize, lsize
   else
      start_pos = 0
 !$OMP parallel do default(none) shared(lsize,x_addrs,comm,recv_buffer,xmap) &
-!$OMP                          private(ptr_x,count,ibegin,istart,iend,pos,unpack_buffer)
+!$OMP                          private(ptr_x,icount,ibegin,istart,iend,pos,unpack_buffer)
      do l = 1, lsize
         ptr_x = x_addrs(l)
         do p = 1, comm%nrecv
-           count = comm%recv(p)%count
+           icount = comm%recv(p)%icount
            ibegin = comm%recv(p)%buffer_pos*lsize + 1
-           istart = ibegin + (l-1)*count
-           iend = istart + count - 1
+           istart = ibegin + (l-1)*icount
+           iend = istart + icount - 1
            pos = comm%recv(p)%buffer_pos
            do n = istart, iend
               pos = pos + 1
@@ -5113,7 +5113,7 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
   real(r8_kind), dimension(xmap%size), target :: dg(xmap%size, lsize)
   integer                                     :: i, j, l, p, n, m
   integer                                     :: msgsize, buffer_pos, pos
-  integer                                     :: istart, iend, count
+  integer                                     :: istart, iend, icount
   real(r8_kind)     ,          pointer, save  :: dgp =>NULL()
   type  (grid_type) ,          pointer, save  :: grid1 =>NULL()
   type  (comm_type) ,          pointer, save  :: comm  =>NULL()
@@ -5133,7 +5133,7 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
 
   do p = 1, comm%nrecv
      recv => comm%recv(p)
-     msgsize = recv%count*lsize
+     msgsize = recv%icount*lsize
      buffer_pos = recv%buffer_pos*lsize
      call mpp_recv(recv_buffer(buffer_pos+1), glen=msgsize, from_pe = recv%pe, block=.false., tag=COMM_TAG_9)
   enddo
@@ -5154,10 +5154,10 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
   istart = 1
   do p = 1, comm%nsend
      send => comm%send(p)
-     msgsize = send%count*lsize
+     msgsize = send%icount*lsize
      pos = buffer_pos
      istart = send%buffer_pos+1
-     iend = istart + send%count - 1
+     iend = istart + send%icount - 1
      do l = 1, lsize
         do n = istart, iend
            pos = pos + 1
@@ -5180,15 +5180,15 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
 
   do p = 1, comm%nrecv
      recv => comm%recv(p)
-     count = recv%count
+     icount = recv%icount
      buffer_pos = recv%buffer_pos*lsize
      if( recv%pe == xmap%me ) then
-!$OMP parallel do default(none) shared(lsize,recv,recv_buffer,buffer_pos,d_addrs,count) &
+!$OMP parallel do default(none) shared(lsize,recv,recv_buffer,buffer_pos,d_addrs,icount) &
 !$OMP                          private(ptr_d,i,pos)
         do l = 1, lsize
-           pos = buffer_pos + (l-1)*count
+           pos = buffer_pos + (l-1)*icount
            ptr_d = d_addrs(l)
-           do n = 1,count
+           do n = 1,icount
               i = recv%i(n)
               pos = pos + 1
               d(i) = recv_buffer(pos)
@@ -5209,9 +5209,9 @@ subroutine get_1_from_xgrid_ug(d_addrs, x_addrs, xmap, isize, xsize, lsize)
 !$OMP parallel do default(none) shared(lsize,recv,recv_buffer,buffer_pos,d_addrs) &
 !$OMP                          private(ptr_d,i,j,pos)
      do l = 1, lsize
-        pos = buffer_pos + (l-1)*recv%count
+        pos = buffer_pos + (l-1)*recv%icount
         ptr_d = d_addrs(l)
-        do n = 1, recv%count
+        do n = 1, recv%icount
            i = recv%i(n)
            pos = pos + 1
            d(i) = d(i) + recv_buffer(pos)
@@ -5259,12 +5259,12 @@ subroutine get_1_from_xgrid_ug_repro(d_addrs, x_addrs, xmap, xsize, lsize)
   !--- pre-post receiving
   do p = 1, comm%nrecv
      recv => comm%recv(p)
-     msgsize = recv%count*lsize
+     msgsize = recv%icount*lsize
      buffer_pos = recv%buffer_pos*lsize
      call mpp_recv(recv_buffer(buffer_pos+1), glen=msgsize, from_pe = recv%pe, block=.false., tag=COMM_TAG_10)
      n = recv%pe -xmap%root_pe
      pl(n) = buffer_pos
-     ml(n) = recv%count
+     ml(n) = recv%icount
   enddo
 
   !pack the data
@@ -5276,7 +5276,7 @@ subroutine get_1_from_xgrid_ug_repro(d_addrs, x_addrs, xmap, xsize, lsize)
      send => comm%send(p)
      do l = 1,lsize
         ptr_x = x_addrs(l)
-        do n = 1, send%count
+        do n = 1, send%icount
            i = send%i(n)
            j = send%j(n)
            g = send%g(n)
@@ -5294,7 +5294,7 @@ subroutine get_1_from_xgrid_ug_repro(d_addrs, x_addrs, xmap, xsize, lsize)
 
   do p =1, comm%nsend
      buffer_pos = comm%send(p)%buffer_pos*lsize
-     msgsize = comm%send(p)%count*lsize
+     msgsize = comm%send(p)%icount*lsize
      call mpp_send(send_buffer(buffer_pos+1), plen=msgsize, to_pe=comm%send(p)%pe, tag=COMM_TAG_10)
   enddo
 
