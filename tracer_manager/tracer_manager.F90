@@ -214,7 +214,7 @@ integer, intent(out) :: num_tracers, num_prog, num_diag
 character(len=256)    :: warnmesg
 
 character(len=32)  :: name_type, str_type, name
-integer :: n, m, mod, num_tracer_methods, nfields, swop
+integer :: n, m, imod, num_tracer_methods, nfields, swop
 integer :: j, log_unit, num_methods
 logical :: flag_type
 type(method_type), dimension(MAX_TRACER_METHOD) :: methods
@@ -264,9 +264,9 @@ endif
 total_tracers(model) = 0
 
 do n=1,nfields
-   call get_field_info(n,str_type,name,mod,num_methods)
+   call get_field_info(n,str_type,name,imod,num_methods)
 
-   if (mod == model .and. str_type == 'tracer') then
+   if (imod == model .and. str_type == 'tracer') then
          num_tracer_fields = num_tracer_fields + 1
          total_tracers(model) = total_tracers(model) + 1
 !   <ERROR MSG="MAX_TRACER_FIELDS exceeded" STATUS="FATAL">
@@ -417,13 +417,13 @@ enddo !}
 
 ! Find any field entries with the instances keyword.
 do n=1,nfields
-   call get_field_info(n,str_type,name,mod,num_methods)
+   call get_field_info(n,str_type,name,imod,num_methods)
 
-   if ( mod == model .and. str_type == 'instances' ) then
+   if ( imod == model .and. str_type == 'instances' ) then
       call get_field_methods(n,methods)
       do j=1,num_methods
 
-         if (.not.get_tracer_index(mod,methods(j)%method_type,m)) then
+         if (.not.get_tracer_index(imod,methods(j)%method_type,m)) then
            call mpp_error(FATAL,'tracer_manager_init: The instances keyword was found for undefined tracer '&
            //trim(methods(j)%method_type))
          else
