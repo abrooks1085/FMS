@@ -2621,12 +2621,12 @@ function date_to_string(time, err_msg)
   character(len=*), intent(out), optional :: err_msg
   character(len=128)                      :: err_msg_local
   character(len=15)                       :: date_to_string
-  integer                                 :: yr,mon,day,hr,min,sec
+  integer                                 :: yr,mon,day,hr,minute,sec
 
   if(present(err_msg)) err_msg = ''
-  call get_date(time,yr,mon,day,hr,min,sec)
+  call get_date(time,yr,mon,day,hr,minute,sec)
   if (yr <= 9999) then
-     write(date_to_string,'(I4.4,I2.2,I2.2,".",I2.2,I2.2,I2.2)') yr, mon, day, hr, min, sec
+     write(date_to_string,'(I4.4,I2.2,I2.2,".",I2.2,I2.2,I2.2)') yr, mon, day, hr, minute, sec
   else
      write(err_msg_local, '(a,i4.4,a)') 'year = ', yr, ' should be less than 10000'
      if(error_handler('function date_to_string', err_msg_local, err_msg)) return
