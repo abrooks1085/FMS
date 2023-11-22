@@ -357,7 +357,7 @@ PROGRAM test
   READ (input_nml_file, NML=test_diag_manager_nml, IOSTAT=ierr)
   READ (input_nml_file, NML=utest_nml, IOSTAT=i)
   ! Check the status of reading the diag_manager_nml
-  IF ( check_nml_error(IOSTAT=ierr, NML_NAME='DIAG_MANAGER_NML') < 0 ) THEN
+  IF ( check_nml_error(IO_STAT=ierr, NML_NAME='DIAG_MANAGER_NML') < 0 ) THEN
      IF ( mpp_pe() == mpp_root_pe() ) THEN
         CALL error_mesg('diag_manager_mod::diag_manager_init', &
                & 'TEST_DIAG_MANAGER_NML not found in input.nml.  Using defaults.', WARNING)

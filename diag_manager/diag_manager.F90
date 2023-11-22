@@ -3842,7 +3842,7 @@ CONTAINS
     READ (input_nml_file, NML=diag_manager_nml, IOSTAT=mystat)
     ! Check the status of reading the diag_manager_nml
 
-    IF ( check_nml_error(IOSTAT=mystat, NML_NAME='DIAG_MANAGER_NML') < 0 ) THEN
+    IF ( check_nml_error(IO_STAT=mystat, NML_NAME='DIAG_MANAGER_NML') < 0 ) THEN
        IF ( mpp_pe() == mpp_root_pe() ) THEN
           CALL error_mesg('diag_manager_mod::diag_manager_init', &
                & 'DIAG_MANAGER_NML not found in input nml file.  Using defaults.', WARNING)

@@ -576,8 +576,8 @@ end subroutine fms_end
   !! @throws FATAL, Unknown namelist, or mistyped namelist variable in namelist ...., (IOSTAT = ####)
   !! The name list given doesn't exist in the namelist file, or a variable in the namelist is
   !! mistyped or isn't a namelist variable.
-  INTEGER FUNCTION check_nml_error(IOSTAT, NML_NAME)
-    INTEGER, INTENT(in) :: IOSTAT !< The iostat value returned when reading a namelist record.
+  INTEGER FUNCTION check_nml_error(IO_STAT, NML_NAME)
+    INTEGER, INTENT(in) :: IO_STAT !< The iostat value returned when reading a namelist record.
     CHARACTER(len=*), INTENT(in) :: NML_NAME !< The name of the namelist. This name will be printed if an error is
                                              !! encountered, otherwise the name is not used.
 
@@ -585,21 +585,21 @@ end subroutine fms_end
 
     IF ( .NOT.module_is_initialized) CALL fms_init()
 
-    check_nml_error = IOSTAT
+    check_nml_error = IO_STAT
 
-    ! Return on valid IOSTAT values
-    IF ( IOSTAT <= 0 .OR.&
-       & IOSTAT == nml_errors%multipleNMLSinFile .OR.&
-       & IOSTAT == nml_errors%NotInFile) RETURN
+    ! Return on valid IO_STAT values
+    IF ( IO_STAT <= 0 .OR.&
+       & IO_STAT == nml_errors%multipleNMLSinFile .OR.&
+       & IO_STAT == nml_errors%NotInFile) RETURN
 
     ! Everything else is a FATAL
-    IF ( (IOSTAT == nml_errors%badType1 .OR. IOSTAT == nml_errors%badType2) .OR. IOSTAT == nml_errors%missingVar ) THEN
+    IF ( (IO_STAT == nml_errors%badType1 .OR. IO_STAT == nml_errors%badType2) .OR. IO_STAT == nml_errors%missingVar ) THEN
        WRITE (err_str,*) 'Unknown namelist, or mistyped namelist variable in namelist ',TRIM(NML_NAME),', &
-             &  (IOSTAT = ',IOSTAT,')'
+             &  (IOSTAT = ',IO_STAT,')'
        CALL error_mesg ('check_nml_error in fms_mod', err_str, FATAL)
        CALL mpp_sync()
     ELSE
-       WRITE (err_str,*) 'Unknown error while reading namelist ',TRIM(NML_NAME),', (IOSTAT = ',IOSTAT,')'
+       WRITE (err_str,*) 'Unknown error while reading namelist ',TRIM(NML_NAME),', (IOSTAT = ',IO_STAT,')'
        CALL error_mesg ('check_nml_error in fms_mod', err_str, FATAL)
        CALL mpp_sync()
     END IF
