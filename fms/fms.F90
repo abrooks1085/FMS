@@ -618,7 +618,7 @@ end subroutine fms_end
     INTEGER, PARAMETER :: unit_begin = 20, unit_end = 1024
     INTEGER :: fileunit, io_stat
     INTEGER, DIMENSION(5) :: nml_iostats
-    LOGICAL :: opened
+    LOGICAL :: isopened
 
     ! Variables for sample namelists
     INTEGER :: i1 !< Variables for sample namelists
@@ -643,8 +643,8 @@ end subroutine fms_end
     IF ( mpp_pe() == mpp_root_pe() ) THEN
        ! Find a free file unit for a scratch file
        file_opened: DO fileunit = unit_begin, unit_end
-          INQUIRE(UNIT=fileunit, OPENED=opened)
-          IF ( .NOT.opened ) EXIT file_opened
+          INQUIRE(UNIT=fileunit, OPENED=isopened)
+          IF ( .NOT.isopened ) EXIT file_opened
        END DO file_opened
 
 #if defined(__PGI) || defined(_CRAYFTN)
