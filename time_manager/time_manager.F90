@@ -1075,7 +1075,7 @@ subroutine set_calendar_type(type, err_msg)
 
 ! Selects calendar for default mapping from time to date.
 
-integer, intent(in) :: type !< constant parameter value (ie. one NO_CALENDAR, )
+integer, intent(in) :: itype !< constant parameter value (ie. one NO_CALENDAR, )
 character(len=*), intent(out), optional :: err_msg
 character(len=256) :: err_msg_local
 
@@ -1083,19 +1083,19 @@ if(.not.module_is_initialized) call time_manager_init()
 
 if(present(err_msg)) err_msg = ''
 
-if(type <  0 .or. type > max_type) then
+if(itype <  0 .or. itype > max_type) then
   err_msg_local = 'Illegal calendar type'
   if(error_handler('subroutine set_calendar_type', err_msg_local, err_msg)) return
 endif
 
-if(seconds_per_day /= 86400 .and. type /= NO_CALENDAR ) then
+if(seconds_per_day /= 86400 .and. itype /= NO_CALENDAR ) then
   err_msg_local = 'Only calendar type NO_CALENDAR is allowed when seconds_per_day is not 86400.'// &
-                  ' You are using '//trim(valid_calendar_types(type))//' and seconds_per_day='
+                  ' You are using '//trim(valid_calendar_types(itype))//' and seconds_per_day='
   write(err_msg_local(len_trim(err_msg_local)+1:len_trim(err_msg_local)+8),'(i8)') seconds_per_day
   if(error_handler('subroutine set_calendar_type', err_msg_local, err_msg)) return
 endif
 
-calendar_type = type
+calendar_type = itype
 
 end subroutine set_calendar_type
 
