@@ -213,7 +213,7 @@ integer,  intent(in) :: model !< model being used
 integer, intent(out) :: num_tracers, num_prog, num_diag
 character(len=256)    :: warnmesg
 
-character(len=32)  :: name_type, type, name
+character(len=32)  :: name_type, str_type, name
 integer :: n, m, mod, num_tracer_methods, nfields, swop
 integer :: j, log_unit, num_methods
 logical :: flag_type
@@ -264,9 +264,9 @@ endif
 total_tracers(model) = 0
 
 do n=1,nfields
-   call get_field_info(n,type,name,mod,num_methods)
+   call get_field_info(n,str_type,name,mod,num_methods)
 
-   if (mod == model .and. type == 'tracer') then
+   if (mod == model .and. str_type == 'tracer') then
          num_tracer_fields = num_tracer_fields + 1
          total_tracers(model) = total_tracers(model) + 1
 !   <ERROR MSG="MAX_TRACER_FIELDS exceeded" STATUS="FATAL">
@@ -417,9 +417,9 @@ enddo !}
 
 ! Find any field entries with the instances keyword.
 do n=1,nfields
-   call get_field_info(n,type,name,mod,num_methods)
+   call get_field_info(n,str_type,name,mod,num_methods)
 
-   if ( mod == model .and. type == 'instances' ) then
+   if ( mod == model .and. str_type == 'instances' ) then
       call get_field_methods(n,methods)
       do j=1,num_methods
 
