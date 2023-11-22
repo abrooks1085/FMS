@@ -446,7 +446,7 @@ contains
  integer, intent(out) :: tick
 
  character(len=4) :: formt='(i )'
- integer :: i3, nspf, fraction, magnitude, tpsfrac
+ integer :: i3, nspf, mantissa, magnitude, tpsfrac
 
  err_msg = ''
  get_tick_from_string = .true.
@@ -456,12 +456,12 @@ contains
    tick = 0 ! Nothing to the right of the decimal point
  else
    write(formt(3:3),'(i1)') nspf
-   read(string(2:i3),formt) fraction
-   if(fraction == 0) then
+   read(string(2:i3),formt) mantissa
+   if(mantissa == 0) then
      tick = 0 ! All zeros to the right of the decimal point
    else
      magnitude = 10**nspf
-     tpsfrac = ticks_per_second*fraction
+     tpsfrac = ticks_per_second*mantissa
      if(allow_rounding) then
        tick = nint((real(tpsfrac, r8_kind)/real(magnitude, r8_kind)))
      else
@@ -1071,7 +1071,7 @@ end function repeat_alarm
 !! For the Gregorian calendar, negative years and the proleptic calendar are not used;
 !! and the discontinuity of days in October 1582 (when the Gregorian calendar was adopted by select groups in Europe)
 !! is also not taken into account.
-subroutine set_calendar_type(type, err_msg)
+subroutine set_calendar_type(itype, err_msg)
 
 ! Selects calendar for default mapping from time to date.
 
