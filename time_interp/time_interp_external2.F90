@@ -257,11 +257,11 @@ module time_interp_external2_mod
     !> @param verbose verbose flag for debugging (optional).
     !> @param [out] axis_names List of axis names (optional).
     !> @param [inout] axis_sizes array of axis lengths ordered X-Y-Z-T (optional).
-    function init_external_field(file,fieldname,domain,desired_units,&
+    function init_external_field(file_name,fieldname,domain,desired_units,&
          verbose,axis_names, axis_sizes,override,correct_leap_year_inconsistency,&
          permit_calendar_conversion,use_comp_domain,ierr, nwindows, ignore_axis_atts, ongrid )
 
-      character(len=*), intent(in)            :: file,fieldname
+      character(len=*), intent(in)            :: file_name,fieldname
       logical, intent(in), optional           :: verbose
       character(len=*), intent(in), optional  :: desired_units
       type(domain2d), intent(in), optional    :: domain
@@ -294,7 +294,7 @@ module time_interp_external2_mod
       integer :: siz(4), siz_in(4), gxsize, gysize,gxsize_max, gysize_max
       type(time_type) :: tdiff
       integer :: yr, mon, day, hr, minu, sec
-      integer :: len, nfile, nfields_orig, nbuf, nx,ny
+      integer :: nlen, nfile, nfields_orig, nbuf, nx,ny
       integer :: numwindows
       logical :: ignore_axatts
       logical :: have_modulo_time
@@ -327,7 +327,7 @@ module time_interp_external2_mod
       endif
       nfile = 0
       do i=1,num_files
-         if(trim(opened_files(i)%filename) == trim(file)) then
+         if(trim(opened_files(i)%filename) == trim(file_name)) then
             nfile = i
             exit  ! file is already opened
          endif
@@ -343,12 +343,12 @@ module time_interp_external2_mod
             call mpp_error(FATAL, "time_interp_external: num_files is greater than max_files, "// &
                                       "increase time_interp_external_nml max_files")
          endif
-         opened_files(num_files)%filename = trim(file)
+         opened_files(num_files)%filename = trim(file_name)
          allocate(opened_files(num_files)%fileobj)
          fileobj => opened_files(num_files)%fileobj
 
-         if(.not. open_file(opened_files(num_files)%fileobj, trim(file), 'read')) &
-             call mpp_error(FATAL, 'time_interp_external_mod: Error in opening file '//trim(file))
+         if(.not. open_file(opened_files(num_files)%fileobj, trim(file_name), 'read')) &
+             call mpp_error(FATAL, 'time_interp_external_mod: Error in opening file '//trim(file_name))
       else
          fileobj => opened_files(nfile)%fileobj
       endif
@@ -413,7 +413,7 @@ module time_interp_external2_mod
            ierr = ERR_FIELD_NOT_FOUND
            return
         else
-           call mpp_error(FATAL,'external field "'//trim(fieldname)//'" not found in file "'//trim(file)//'"')
+           call mpp_error(FATAL,'external field "'//trim(fieldname)//'" not found in file "'//trim(file_name)//'"')
         endif
       endif
 
@@ -479,9 +479,9 @@ module time_interp_external2_mod
       call get_variable_size(fileobj, fieldname, axislen)
       do j=1,loaded_fields(num_fields)%ndim
          call get_axis_cart(fileobj, axisname(j), cart)
-         len = axislen(j)
+         nlen = axislen(j)
          if (cart == 'N' .and. .not. ignore_axatts) then
-            write(msg,'(a,"/",a)')  trim(file),trim(fieldname)
+            write(msg,'(a,"/",a)')  trim(file_name),trim(fieldname)
             call mpp_error(FATAL,'file/field '//trim(msg)// &
                  ' couldnt recognize axis atts in time_interp_external')
          else if (cart == 'N' .and. ignore_axatts) then
@@ -491,14 +491,14 @@ module time_interp_external2_mod
          case ('X')
             if (j.eq.2) transpose_xy = .true.
             if (.not.PRESENT(domain) .and. .not.PRESENT(override)) then
-               isdata=1;iedata=len
-               iscomp=1;iecomp=len
-               gxsize = len
-               dxsize = len
+               isdata=1;iedata=nlen
+               iscomp=1;iecomp=nlen
+               gxsize = nlen
+               dxsize = nlen
                loaded_fields(num_fields)%isc=iscomp;loaded_fields(num_fields)%iec=iecomp
             elseif (PRESENT(override)) then
-               gxsize = len
-               if (PRESENT(axis_sizes)) axis_sizes(1) = len
+               gxsize = nlen
+               if (PRESENT(axis_sizes)) axis_sizes(1) = nlen
             endif
             loaded_fields(num_fields)%axisname(1) = axisname(j)
             if(use_comp_domain1) then
@@ -506,34 +506,34 @@ module time_interp_external2_mod
             else
                loaded_fields(num_fields)%siz(1) = dxsize
             endif
-            if (len /= gxsize) then
-               write(msg,'(a,"/",a)')  trim(file),trim(fieldname)
+            if (nlen /= gxsize) then
+               write(msg,'(a,"/",a)')  trim(file_name),trim(fieldname)
                call mpp_error(FATAL,'time_interp_ext, file/field '//trim(msg)//' x dim doesnt match model')
             endif
          case ('Y')
             loaded_fields(num_fields)%axisname(2) = axisname(j)
             if (.not.PRESENT(domain) .and. .not.PRESENT(override)) then
-               jsdata=1;jedata=len
-               jscomp=1;jecomp=len
-               gysize = len
-               dysize = len
+               jsdata=1;jedata=nlen
+               jscomp=1;jecomp=nlen
+               gysize = nlen
+               dysize = nlen
                loaded_fields(num_fields)%jsc=jscomp;loaded_fields(num_fields)%jec=jecomp
             elseif (PRESENT(override)) then
-               gysize = len
-               if (PRESENT(axis_sizes)) axis_sizes(2) = len
+               gysize = nlen
+               if (PRESENT(axis_sizes)) axis_sizes(2) = nlen
             endif
             if(use_comp_domain1) then
                loaded_fields(num_fields)%siz(2) = ny
             else
                loaded_fields(num_fields)%siz(2) = dysize
             endif
-            if (len /= gysize) then
-               write(msg,'(a,"/",a)')  trim(file),trim(fieldname)
+            if (nlen /= gysize) then
+               write(msg,'(a,"/",a)')  trim(file_name),trim(fieldname)
                call mpp_error(FATAL,'time_interp_ext, file/field '//trim(msg)//' y dim doesnt match model')
             endif
          case ('Z')
             loaded_fields(num_fields)%axisname(3) = axisname(j)
-            loaded_fields(num_fields)%siz(3) = len
+            loaded_fields(num_fields)%siz(3) = nlen
          case ('T')
             loaded_fields(num_fields)%axisname(4) = axisname(j)
             loaded_fields(num_fields)%siz(4) = ntime
@@ -624,7 +624,7 @@ module time_interp_external2_mod
          loaded_fields(num_fields)%have_modulo_times = .false.
       endif
       if(ntime == 1) then
-         call mpp_error(NOTE, 'time_interp_external_mod: file '//trim(file)//'  has only one time level')
+         call mpp_error(NOTE, 'time_interp_external_mod: file '//trim(file_name)//'  has only one time level')
       else
          do j= 1, ntime
             loaded_fields(num_fields)%period(j) = loaded_fields(num_fields)%end_time(j) &
@@ -670,7 +670,7 @@ module time_interp_external2_mod
       do j=1,ntime-1
          if (loaded_fields(num_fields)%time(j) >= loaded_fields(num_fields)%time(j+1)) then
             write(msg,'(A,i20)') "times not monotonically increasing. Filename: " &
-                 //TRIM(file)//"  field:  "//TRIM(fieldname)//" timeslice: ", j
+                 //TRIM(file_name)//"  field:  "//TRIM(fieldname)//" timeslice: ", j
             call mpp_error(FATAL, TRIM(msg))
          endif
       enddo
@@ -740,9 +740,9 @@ module time_interp_external2_mod
 ! ============================================================================
 !> load specified record from file
 !> Always loads in r8, casts down for horiz_interp if interp argument is already allocated for r4's.
-subroutine load_record(field, rec, interp, is_in, ie_in, js_in, je_in, window_id_in)
+subroutine load_record(field, rec_num, interp, is_in, ie_in, js_in, je_in, window_id_in)
   type(ext_fieldtype),     intent(inout)        :: field
-  integer            ,     intent(in)           :: rec    ! record number
+  integer            ,     intent(in)           :: rec_num    ! record number
   type(horiz_interp_type), intent(in), optional :: interp
   integer,                 intent(in), optional :: is_in, ie_in, js_in, je_in
   integer,                 intent(in), optional :: window_id_in
@@ -765,7 +765,7 @@ subroutine load_record(field, rec, interp, is_in, ie_in, js_in, je_in, window_id
   need_compute = .true.
 
 !$OMP CRITICAL
-  ib = find_buf_index(rec,field%ibuf)
+  ib = find_buf_index(rec_num,field%ibuf)
 
   if(ib>0) then
      !--- do nothing
@@ -775,7 +775,7 @@ subroutine load_record(field, rec, interp, is_in, ie_in, js_in, je_in, window_id
      field%nbuf = field%nbuf + 1
      if(field%nbuf > size(field%domain_data,4).or.field%nbuf <= 0) field%nbuf = 1
      ib = field%nbuf
-     field%ibuf(ib) = rec
+     field%ibuf(ib) = rec_num
      field%need_compute(ib,:) = .true.
 
      if (debug_this_module) write(outunit,*) 'reading record without domain for field ',trim(field%name)
@@ -783,7 +783,7 @@ subroutine load_record(field, rec, interp, is_in, ie_in, js_in, je_in, window_id
      start(1) = field%is_src; nread(1) = field%ie_src - field%is_src + 1
      start(2) = field%js_src; nread(2) = field%je_src - field%js_src + 1
      start(3) = 1;            nread(3) = size(field%src_data,3)
-     start(field%tdim) = rec; nread(field%tdim) = 1
+     start(field%tdim) = rec_num; nread(field%tdim) = 1
      call read_data(field%fileobj,field%name,field%src_data(:,:,:,ib:ib),corner=start,edge_lengths=nread)
   endif
 !$OMP END CRITICAL
@@ -881,14 +881,14 @@ subroutine load_record(field, rec, interp, is_in, ie_in, js_in, je_in, window_id
 end subroutine load_record
 
 !> Given a initialized ext_fieldtype and record number, loads the given index into field%src_data
-subroutine load_record_0d(field, rec)
+subroutine load_record_0d(field, rec_num)
   type(ext_fieldtype),     intent(inout)        :: field
-  integer            ,     intent(in)           :: rec    ! record number
+  integer            ,     intent(in)           :: rec_num    ! record number
   ! ---- local vars
   integer :: ib ! index in the array of input buffers
   integer :: start(4), nread(4)
 
-  ib = find_buf_index(rec,field%ibuf)
+  ib = find_buf_index(rec_num,field%ibuf)
 
   if(ib>0) then
      return
@@ -897,12 +897,12 @@ subroutine load_record_0d(field, rec)
      field%nbuf = field%nbuf + 1
      if(field%nbuf > size(field%domain_data,4).or.field%nbuf <= 0) field%nbuf = 1
      ib = field%nbuf
-     field%ibuf(ib) = rec
+     field%ibuf(ib) = rec_num
 
      if (debug_this_module) write(outunit,*) 'reading record without domain for field ',trim(field%name)
      start = 1; nread = 1
      start(3) = 1;            nread(3) = size(field%src_data,3)
-     start(field%tdim) = rec; nread(field%tdim) = 1
+     start(field%tdim) = rec_num; nread(field%tdim) = 1
      call read_data(field%fileobj,field%name,field%src_data(:,:,:,ib),corner=start,edge_lengths=nread)
      if ( field%region_type .NE. NO_REGION ) then
         call mpp_error(FATAL, "time_interp_external: region_type should be NO_REGION when field is scalar")
