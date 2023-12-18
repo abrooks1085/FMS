@@ -5222,11 +5222,11 @@ end subroutine check_message_size
   end subroutine set_overlaps
 
  !##############################################################################
-  subroutine set_single_overlap(overlap_in, overlap_out, isoff, ieoff, jsoff, jeoff, index, dir, rotation)
+  subroutine set_single_overlap(overlap_in, overlap_out, isoff, ieoff, jsoff, jeoff, idx, dir, rotation)
     type(overlap_type),    intent(in) :: overlap_in
     type(overlap_type), intent(inout) :: overlap_out
     integer,               intent(in) :: isoff, jsoff, ieoff, jeoff
-    integer,               intent(in) :: index
+    integer,               intent(in) :: idx
     integer,               intent(in) :: dir
     integer, optional,     intent(in) :: rotation
     integer                           :: rotate
@@ -5251,27 +5251,27 @@ end subroutine check_message_size
          "set_single_overlap: number of overlap is greater than MAXOVERLAP, increase MAXOVERLAP")
     rotate = ZERO
     if(present(rotation)) rotate = rotation
-    overlap_out%rotation  (count) = overlap_in%rotation(index)
+    overlap_out%rotation  (count) = overlap_in%rotation(idx)
     overlap_out%dir       (count) = dir
-    overlap_out%tileMe    (count) = overlap_in%tileMe(index)
-    overlap_out%tileNbr   (count) = overlap_in%tileNbr(index)
+    overlap_out%tileMe    (count) = overlap_in%tileMe(idx)
+    overlap_out%tileNbr   (count) = overlap_in%tileNbr(idx)
 
     select case(rotate)
     case(ZERO)
-       overlap_out%is(count)      = overlap_in%is(index) + isoff
-       overlap_out%ie(count)      = overlap_in%ie(index) + ieoff
-       overlap_out%js(count)      = overlap_in%js(index) + jsoff
-       overlap_out%je(count)      = overlap_in%je(index) + jeoff
+       overlap_out%is(count)      = overlap_in%is(idx) + isoff
+       overlap_out%ie(count)      = overlap_in%ie(idx) + ieoff
+       overlap_out%js(count)      = overlap_in%js(idx) + jsoff
+       overlap_out%je(count)      = overlap_in%je(idx) + jeoff
     case(NINETY)
-       overlap_out%is(count)      = overlap_in%is(index) - jeoff
-       overlap_out%ie(count)      = overlap_in%ie(index) - jsoff
-       overlap_out%js(count)      = overlap_in%js(index) + isoff
-       overlap_out%je(count)      = overlap_in%je(index) + ieoff
+       overlap_out%is(count)      = overlap_in%is(idx) - jeoff
+       overlap_out%ie(count)      = overlap_in%ie(idx) - jsoff
+       overlap_out%js(count)      = overlap_in%js(idx) + isoff
+       overlap_out%je(count)      = overlap_in%je(idx) + ieoff
     case(MINUS_NINETY)
-       overlap_out%is(count)      = overlap_in%is(index) + jsoff
-       overlap_out%ie(count)      = overlap_in%ie(index) + jeoff
-       overlap_out%js(count)      = overlap_in%js(index) - ieoff
-       overlap_out%je(count)      = overlap_in%je(index) - isoff
+       overlap_out%is(count)      = overlap_in%is(idx) + jsoff
+       overlap_out%ie(count)      = overlap_in%ie(idx) + jeoff
+       overlap_out%js(count)      = overlap_in%js(idx) - ieoff
+       overlap_out%je(count)      = overlap_in%je(idx) - isoff
     case default
        call mpp_error(FATAL, "mpp_domains_define.inc: the value of rotation should be ZERO, NINETY or MINUS_NINETY")
     end select
@@ -6372,7 +6372,7 @@ subroutine set_bound_overlap( domain, position )
   integer,        intent(in)    :: position
   integer                       :: m, n, l, count, dr, tMe
   integer, parameter            :: MAXCOUNT = 100
-  integer, dimension(MAXCOUNT)  :: dir, rotation, is, ie, js, je, tileMe, index
+  integer, dimension(MAXCOUNT)  :: dir, rotation, is, ie, js, je, tileMe, idx
   integer, dimension(size(domain%x(:)), 4)           :: nrecvl
   integer, dimension(size(domain%x(:)), 4, MAXCOUNT) :: isl, iel, jsl, jel
   type(overlap_type),  pointer   :: overlap => NULL()
@@ -6793,7 +6793,7 @@ subroutine set_bound_overlap( domain, position )
            js(count) = js_south1; je(count) = je_south1
            dir(count) = 2
            rotation(count) = ZERO
-           index(count) = 1 + ishift
+           idx(count) = 1 + ishift
         endif
         if(my_pe == pe_south2) then
            count = count + 1
@@ -6801,7 +6801,7 @@ subroutine set_bound_overlap( domain, position )
            js(count) = js_south2; je(count) = je_south2
            dir(count) = 2
            rotation(count) = ZERO
-           index(count) = 1
+           idx(count) = 1
         endif
         if(my_pe == pe_west0) then
            count = count + 1
@@ -6809,7 +6809,7 @@ subroutine set_bound_overlap( domain, position )
            js(count) = js_west0; je(count) = je_west0
            dir(count) = 3
            rotation(count) = ONE_HUNDRED_EIGHTY
-           index(count) = jec-jsc+1+jshift
+           idx(count) = jec-jsc+1+jshift
         endif
         if(my_pe == pe_west1) then
            count = count + 1
@@ -6817,7 +6817,7 @@ subroutine set_bound_overlap( domain, position )
            js(count) = js_west1; je(count) = je_west1
            dir(count) = 3
            rotation(count) = ZERO
-           index(count) = 1 + jshift
+           idx(count) = 1 + jshift
         endif
         if(my_pe == pe_west2) then
            count = count + 1
@@ -6825,7 +6825,7 @@ subroutine set_bound_overlap( domain, position )
            js(count) = js_west2; je(count) = je_west2
            dir(count) = 3
            rotation(count) = ZERO
-           index(count) = 1
+           idx(count) = 1
         endif
 
         if(count >0) then
@@ -6838,12 +6838,12 @@ subroutine set_bound_overlap( domain, position )
            if (associated(bound%recv(nrecv)%js)) deallocate(bound%recv(nrecv)%js) !< Check if allocated
            if (associated(bound%recv(nrecv)%je)) deallocate(bound%recv(nrecv)%je) !< Check if allocated
            if (associated(bound%recv(nrecv)%dir)) deallocate(bound%recv(nrecv)%dir) !< Check if allocated
-           if (associated(bound%recv(nrecv)%index)) deallocate(bound%recv(nrecv)%index) !< Check if allocated
+           if (associated(bound%recv(nrecv)%idx)) deallocate(bound%recv(nrecv)%idx) !< Check if allocated
            if (associated(bound%recv(nrecv)%tileMe)) deallocate(bound%recv(nrecv)%tileMe) !< Check if allocated
            if (associated(bound%recv(nrecv)%rotation)) deallocate(bound%recv(nrecv)%rotation) !< Check if allocated
            allocate(bound%recv(nrecv)%is(count),     bound%recv(nrecv)%ie(count) )
            allocate(bound%recv(nrecv)%js(count),     bound%recv(nrecv)%je(count) )
-           allocate(bound%recv(nrecv)%dir(count),    bound%recv(nrecv)%index(count)  )
+           allocate(bound%recv(nrecv)%dir(count),    bound%recv(nrecv)%idx(count)  )
            allocate(bound%recv(nrecv)%tileMe(count), bound%recv(nrecv)%rotation(count) )
 
            bound%recv(nrecv)%is(:)       = is(1:count)
@@ -6853,7 +6853,7 @@ subroutine set_bound_overlap( domain, position )
            bound%recv(nrecv)%dir(:)      = dir(1:count)
            bound%recv(nrecv)%tileMe(:)   = 1
            bound%recv(nrecv)%rotation(:) = rotation(1:count)
-           bound%recv(nrecv)%index(:)        = index(1:count)
+           bound%recv(nrecv)%idx(:)        = idx(1:count)
         endif
      enddo
   else
@@ -6941,12 +6941,12 @@ subroutine set_bound_overlap( domain, position )
            if (associated(bound%recv(nrecv)%js)) deallocate(bound%recv(nrecv)%js) !< Check if allocated
            if (associated(bound%recv(nrecv)%je)) deallocate(bound%recv(nrecv)%je) !< Check if allocated
            if (associated(bound%recv(nrecv)%dir)) deallocate(bound%recv(nrecv)%dir) !< Check if allocated
-           if (associated(bound%recv(nrecv)%index)) deallocate(bound%recv(nrecv)%index) !< Check if allocated
+           if (associated(bound%recv(nrecv)%idx)) deallocate(bound%recv(nrecv)%idx) !< Check if allocated
            if (associated(bound%recv(nrecv)%tileMe)) deallocate(bound%recv(nrecv)%tileMe) !< Check if allocated
            if (associated(bound%recv(nrecv)%rotation)) deallocate(bound%recv(nrecv)%rotation) !< Check if allocated
            allocate(bound%recv(nrecv)%is(count),     bound%recv(nrecv)%ie(count) )
            allocate(bound%recv(nrecv)%js(count),     bound%recv(nrecv)%je(count) )
-           allocate(bound%recv(nrecv)%dir(count),    bound%recv(nrecv)%index(count)  )
+           allocate(bound%recv(nrecv)%dir(count),    bound%recv(nrecv)%idx(count)  )
            allocate(bound%recv(nrecv)%tileMe(count), bound%recv(nrecv)%rotation(count) )
            bound%recv(nrecv)%is(:)       = is(1:count)
            bound%recv(nrecv)%ie(:)       = ie(1:count)
@@ -6962,23 +6962,23 @@ subroutine set_bound_overlap( domain, position )
         do n = 1, bound%recv(m)%count
            tMe = bound%recv(m)%tileMe(n)
            dr = bound%recv(m)%dir(n)
-           bound%recv(m)%index(n) = 1
+           bound%recv(m)%idx(n) = 1
            do l = 1, nrecvl(tMe,dr)
               if(dr == 1 .OR. dr == 3) then  ! EAST, WEST
                  if( bound%recv(m)%js(n) > jsl(tMe, dr, l) ) then
                     if( bound%recv(m)%rotation(n) == ONE_HUNDRED_EIGHTY ) then
-                       bound%recv(m)%index(n) = bound%recv(m)%index(n)                  + &
+                       bound%recv(m)%idx(n) = bound%recv(m)%idx(n)                  + &
                             max(abs(jel(tMe, dr, l)-jsl(tMe, dr, l))+1, &
                             abs(iel(tMe, dr, l)-isl(tMe, dr, l))+1)
                     else
-                       bound%recv(m)%index(n) = bound%recv(m)%index(n)                  + &
+                       bound%recv(m)%idx(n) = bound%recv(m)%idx(n)                  + &
                             max(abs(jel(tMe, dr, l)-jsl(tMe, dr, l)), &
                             abs(iel(tMe, dr, l)-isl(tMe, dr, l))) + 1 - jshift
                     endif
                  end if
               else                             ! South, North
                  if( bound%recv(m)%is(n) > isl(tMe, dr, l) ) then
-                    bound%recv(m)%index(n) = bound%recv(m)%index(n)                  + &
+                    bound%recv(m)%idx(n) = bound%recv(m)%idx(n)                  + &
                          max(abs(jel(tMe, dr, l)-jsl(tMe, dr, l)), &
                          abs(iel(tMe, dr, l)-isl(tMe, dr, l))) + 1 - ishift
                  end if
@@ -7995,7 +7995,7 @@ subroutine deallocate_overlap_type( overlap)
   if(ASSOCIATED(overlap%js)) deallocate(overlap%js)
   if(ASSOCIATED(overlap%je)) deallocate(overlap%je)
   if(ASSOCIATED(overlap%dir)) deallocate(overlap%dir)
-  if(ASSOCIATED(overlap%index)) deallocate(overlap%index)
+  if(ASSOCIATED(overlap%idx)) deallocate(overlap%idx)
   if(ASSOCIATED(overlap%rotation)) deallocate(overlap%rotation)
   if(ASSOCIATED(overlap%from_contact)) deallocate(overlap%from_contact)
   if(ASSOCIATED(overlap%msgsize)) deallocate(overlap%msgsize)
@@ -8068,7 +8068,7 @@ subroutine add_update_overlap( overlap_out, overlap_in)
      overlap_out%je          (1:count_out) = overlap%je          (1:count_out)
      overlap_out%dir         (1:count_out) = overlap%dir         (1:count_out)
      overlap_out%rotation    (1:count_out) = overlap%rotation    (1:count_out)
-     overlap_out%index       (1:count_out) = overlap%index       (1:count_out)
+     overlap_out%idx         (1:count_out) = overlap%idx         (1:count_out)
      overlap_out%from_contact(1:count_out) = overlap%from_contact(1:count_out)
      overlap_out%msgsize     (1:count_out) = overlap%msgsize     (1:count_out)
      call deallocate_overlap_type(overlap)

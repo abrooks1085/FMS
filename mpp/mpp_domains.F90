@@ -330,7 +330,7 @@ module mpp_domains_mod
      integer,         pointer :: je(:)           => NULL() !< ending   j-index
      integer,         pointer :: dir(:)          => NULL() !< direction ( value 1,2,3,4 = E,S,W,N)
      integer,         pointer :: rotation(:)     => NULL() !< rotation angle.
-     integer,         pointer :: index(:)        => NULL() !< for refinement
+     integer,         pointer :: idx(:)          => NULL() !< for refinement
      logical,         pointer :: from_contact(:) => NULL() !< indicate if the overlap is computed from
                                                            !! define_contact_overlap
   end type overlap_type

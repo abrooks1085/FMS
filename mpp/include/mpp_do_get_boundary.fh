@@ -36,7 +36,7 @@ subroutine MPP_DO_GET_BOUNDARY_3D_( f_addrs, domain, bound, b_addrs, bsize, ke, 
   integer,    allocatable :: msg1(:), msg2(:)
   logical                 :: recv(4), send(4)
   integer                 :: nlist, buffer_pos, pos, tMe, from_pe
-  integer                 :: i, j, k, l, m, n, index, buffer_recv_size
+  integer                 :: i, j, k, l, m, n, idx, buffer_recv_size
   integer                 :: is, ie, js, je, msgsize, l_size, num
   character(len=8)        :: text
   integer                 :: outunit
@@ -262,12 +262,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_( f_addrs, domain, bound, b_addrs, bsize, ke, 
               do l=1,l_size
                  ptr_ebuffer = b_addrs(1, l, tMe)
                  do k = 1, ke
-                    index = bound%recv(m)%index(n)
+                    idx = bound%recv(m)%idx(n)
                     do j = js, je
                        do i = is, ie
                           pos = pos + 1
-                          ebuffer(index,k) = buffer(pos)
-                          index = index + 1
+                          ebuffer(idx,k) = buffer(pos)
+                          idx = idx + 1
                        end do
                     end do
                  end do
@@ -276,12 +276,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_( f_addrs, domain, bound, b_addrs, bsize, ke, 
               do l=1,l_size
                  ptr_sbuffer = b_addrs(2, l, tMe)
                  do k = 1, ke
-                    index = bound%recv(m)%index(n)
+                    idx = bound%recv(m)%idx(n)
                     do j = js, je
                        do i = is, ie
                           pos = pos + 1
-                          sbuffer(index,k) = buffer(pos)
-                          index = index + 1
+                          sbuffer(idx,k) = buffer(pos)
+                          idx = idx + 1
                        end do
                     end do
                  end do
@@ -290,12 +290,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_( f_addrs, domain, bound, b_addrs, bsize, ke, 
               do l=1,l_size
                  ptr_wbuffer = b_addrs(3, l, tMe)
                  do k = 1, ke
-                    index = bound%recv(m)%index(n)
+                    idx = bound%recv(m)%idx(n)
                     do j = js, je
                        do i = is, ie
                           pos = pos + 1
-                          wbuffer(index,k) = buffer(pos)
-                          index = index + 1
+                          wbuffer(idx,k) = buffer(pos)
+                          idx = idx + 1
                        end do
                     end do
                  end do
@@ -304,12 +304,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_( f_addrs, domain, bound, b_addrs, bsize, ke, 
               do l=1,l_size
                  ptr_nbuffer = b_addrs(4, l, tMe)
                  do k = 1, ke
-                    index = bound%recv(m)%index(n)
+                    idx = bound%recv(m)%idx(n)
                     do j = js, je
                        do i = is, ie
                           pos = pos + 1
-                          nbuffer(index,k) = buffer(pos)
-                          index = index + 1
+                          nbuffer(idx,k) = buffer(pos)
+                          idx = idx + 1
                        end do
                     end do
                  end do
@@ -356,7 +356,7 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
   logical                 :: recvy(4), sendy(4)
   integer                 :: nlist, buffer_pos, pos, tMe, m
   integer                 :: is, ie, js, je, msgsize, l_size, buffer_recv_size
-  integer                 :: i, j, k, l, n, index, to_pe, from_pe
+  integer                 :: i, j, k, l, n, idx, to_pe, from_pe
   integer                 :: rank_x, rank_y, cur_rank, ind_x, ind_y
   integer                 :: nsend_x, nsend_y, nrecv_x, nrecv_y, num
   character(len=8)        :: text
@@ -863,12 +863,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_ebuffery = b_addrsy(1, l, tMe)
                     do k = 1, ke
-                       index = boundy%recv(ind_y)%index(n)
+                       idx = boundy%recv(ind_y)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             ebuffery(index,k) = buffer(pos)
-                             index = index + 1
+                             ebuffery(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -877,12 +877,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_sbuffery = b_addrsy(2, l, tMe)
                     do k = 1, ke
-                       index = boundy%recv(ind_y)%index(n)
+                       idx = boundy%recv(ind_y)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             sbuffery(index,k) = buffer(pos)
-                             index = index + 1
+                             sbuffery(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -891,12 +891,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_wbuffery = b_addrsy(3, l, tMe)
                     do k = 1, ke
-                       index = boundy%recv(ind_y)%index(n)
+                       idx = boundy%recv(ind_y)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             wbuffery(index,k) = buffer(pos)
-                             index = index + 1
+                             wbuffery(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -905,12 +905,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_nbuffery = b_addrsy(4, l, tMe)
                     do k = 1, ke
-                       index = boundy%recv(ind_y)%index(n)
+                       idx = boundy%recv(ind_y)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             nbuffery(index,k) = buffer(pos)
-                             index = index + 1
+                             nbuffery(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -941,12 +941,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_ebufferx = b_addrsx(1, l, tMe)
                     do k = 1, ke
-                       index = boundx%recv(ind_x)%index(n)
+                       idx = boundx%recv(ind_x)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             ebufferx(index,k) = buffer(pos)
-                             index = index + 1
+                             ebufferx(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -955,12 +955,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_sbufferx = b_addrsx(2, l, tMe)
                     do k = 1, ke
-                       index = boundx%recv(ind_x)%index(n)
+                       idx = boundx%recv(ind_x)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             sbufferx(index,k) = buffer(pos)
-                             index = index + 1
+                             sbufferx(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -969,12 +969,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_wbufferx = b_addrsx(3, l, tMe)
                     do k = 1, ke
-                       index = boundx%recv(ind_x)%index(n)
+                       idx = boundx%recv(ind_x)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             wbufferx(index,k) = buffer(pos)
-                             index = index + 1
+                             wbufferx(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
@@ -983,12 +983,12 @@ subroutine MPP_DO_GET_BOUNDARY_3D_V_(f_addrsx, f_addrsy, domain, boundx, boundy,
                  do l=1,l_size
                     ptr_nbufferx = b_addrsx(4, l, tMe)
                     do k = 1, ke
-                       index = boundx%recv(ind_x)%index(n)
+                       idx = boundx%recv(ind_x)%idx(n)
                        do j = js, je
                           do i = is, ie
                              pos = pos + 1
-                             nbufferx(index,k) = buffer(pos)
-                             index = index + 1
+                             nbufferx(idx,k) = buffer(pos)
+                             idx = idx + 1
                           end do
                        end do
                     end do
