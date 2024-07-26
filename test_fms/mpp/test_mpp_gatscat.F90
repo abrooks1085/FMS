@@ -90,6 +90,8 @@ contains
 
     call test_scatter_2D_R4(npes, pe, root, out_unit)
 
+    call test_new_scatter_2D_R4(npes, pe, root, out_unit)
+
     call test_scatter_2D_R8(npes, pe, root, out_unit)
 
   end subroutine test_scatter_2D
@@ -113,6 +115,7 @@ contains
 
   !> @brief Test the mpp_scatter functions with FLOAT_KIND data arguments.
   subroutine test_scatter_2D_R4(npes,pe,root,out_unit)
+    use mpi
     integer, intent(in) :: npes,pe,root,out_unit
 
     integer :: pelist(npes)
@@ -123,9 +126,10 @@ contains
     integer :: iz, jz  !!The zeroth element to be scattered is at pos data(is+iz, js+jz)
     integer :: is, ie, js, je !!The amount of data to be scattered is (ie - is)*(je - js)
     integer :: id, jd
+    double precision :: start_time, end_time
 
-    DS = 7 !! DS should be less than 10 for the tests below to make sense.
-    SS = 6
+    DS = 99 !! DS should be less than 10 for the tests below to make sense.
+    SS = 5
     allocate(scatter_data(DS, DS))
     allocate(segment(SS, SS))
 
@@ -143,13 +147,13 @@ contains
     if (pe == root) then
        do i = 1,DS
           do j = 1,DS
-             scatter_data(i,j) = i*10 + j
+             scatter_data(i,j) = i*100 + j
           enddo
        enddo
        !! And re-initalize segment on the root pe.
        do i = 1,SS
           do j = 1,SS
-             segment(i,j) = i * 10 + j
+             segment(i,j) = i * 100 + j
           enddo
        enddo
     endif
@@ -159,12 +163,16 @@ contains
     !! The data to scatter is "moved" in a 1D array of size
     !! S=(ie - is) * (je - js) and starts with the data at
     !! position (iz,jz). Recall Fortran is column-major order.
-    iz = 2
-    jz = 3
-    is = 2
-    ie = 3
-    js = 2
-    je = 3
+    iz = 0
+    jz = 0
+    is = 1
+    ie = 5
+    js = 1
+    je = 5
+
+    call mpp_sync()
+    start_time = MPI_WTIME()
+
     if(pe .eq. root) then
        call mpp_scatter(is, ie, js, je, pelist(1:npes-1), segment, scatter_data, .true., iz, jz)
     else
@@ -172,7 +180,9 @@ contains
     endif
 
     call mpp_sync() !
+    end_time = MPI_WTIME()
 
+    print *, 'pe: ', pe, 'mpp_scatter time: ', end_time - start_time
 
     !! Verify that the segment array has been updated on the target pes (i,e, those
     !! in the pelist, which does not include pe numbered npes)
@@ -182,15 +192,14 @@ contains
        !!Note below row (id index of "data() equivalent or formula") changing fastest.
        do jd = js + jz, je + jz
           do id = is + iz, ie + iz
-             if (segment(i,j) /= ( id * 10 + jd )) then
-                !!write(6,*) i, j, id, jd
+             if (segment(i,j) /= ( id * 100 + jd )) then
                 call mpp_error(FATAL, "Test scatter 2D R4 failed in general scatter section.")
              endif
              !! Do to the next data element in segment
              !! If just done the bottom element of a column:
              if(i == SS) then
-                i = is
-                j = MOD(j + 1, SS) ! next column of segement()
+                i = 1
+                j = MOD(j + 1, SS + 1) ! next column of segement()
              else
                 i = i + 1 ! next row of segemnt()
              endif
@@ -216,6 +225,194 @@ contains
     write(out_unit,*) "Test test_scatter_2D_R4  successful ."
 
 end subroutine test_scatter_2D_R4
+
+  !> @brief Test the mpp_scatter functions with FLOAT_KIND data arguments.
+  subroutine test_new_scatter_2D_R4(npes,pe,root,out_unit)
+    use mpi
+    integer, intent(in) :: npes,pe,root,out_unit
+
+    integer :: pelist(npes)
+    integer :: i,j,k
+    real(kind=r4_kind), allocatable, dimension(:,:)  ::  scatter_data     !!Data to be scattered
+    real(kind=r4_kind), allocatable, dimension(:,:)  ::  segment
+    integer :: DS, SS  !!Source data size and segment size
+    integer :: iz, jz  !!The zeroth element to be scattered is at pos data(is+iz, js+jz)
+    integer :: is, ie, js, je !!The amount of data to be scattered is (ie - is)*(je - js)
+    integer :: id, jd
+    double precision :: start_time, end_time
+
+    DS = 99 !! DS should be less than 10 for the tests below to make sense.
+    SS = 5
+    allocate(scatter_data(DS, DS))
+    allocate(segment(SS, SS))
+
+    !!The full PE list [0, ...,npes-1]
+    do i=0,npes-1
+       pelist(i+1) = i
+    enddo
+
+    !!Initialize all data on all PEs
+    scatter_data = -1
+    segment = -2.0
+    !! Re-initialize data  on the root PE only.
+    !! Data is such that we can calculate what it should be with a Formula
+    !! using the indecies. E.g.. data(3,4) is 34.000, etc.
+    if (pe == root) then
+       do i = 1,DS
+          do j = 1,DS
+             scatter_data(i,j) = i*100 + j
+          enddo
+       enddo
+       !! And re-initalize segment on the root pe.
+   !    do i = 1,SS
+   !       do j = 1,SS
+   !          segment(i,j) = i * 10 + j
+   !       enddo
+   !    enddo
+    endif
+
+    !! Scatter from the source pe a subset of the data array.
+    !! The subset is to go into the segment array of the target pes.
+    !! The data to scatter is "moved" in a 1D array of size
+    !! S=(ie - is) * (je - js) and starts with the data at
+    !! position (iz,jz). Recall Fortran is column-major order.
+    iz = 0
+    jz = 0
+    is = 1
+    ie = 5
+    js = 1
+    je = 5
+      
+
+    call mpp_sync()
+    start_time = MPI_WTIME()
+
+    call mpp_new_scatter(is, ie, js, je, pelist(1:npes), segment, scatter_data, pe, root)
+
+    call mpp_sync() !
+    end_time = MPI_WTIME()
+
+    print *, 'pe: ', pe, 'mpp_new_scatter time: ', end_time - start_time
+
+    !! Verify that the segment array has been updated on the target pes (i,e, those
+    !! in the pelist, which does not include pe numbered npes)
+    if(ANY(pe == pelist(1:npes))) then
+       i = 1
+       j = 1
+       !!Note below row (id index of "data() equivalent or formula") changing fastest.
+       do jd = js + jz, je + jz
+          do id = is + iz, ie + iz
+             if (segment(i,j) /= ( id * 100 + jd )) then
+                call mpp_error(FATAL, "Test new scatter 2D R4 failed in general scatter section.")
+             endif
+             !! Do to the next data element in segment
+             !! If just done the bottom element of a column:
+             if(i == SS) then
+                i = 1
+                j = MOD(j + 1, SS+1) ! next column of segement()
+             else
+                i = i + 1 ! next row of segemnt()
+             endif
+          enddo
+       enddo
+    endif
+
+    call mpp_sync() !
+    write(out_unit,*) "Test test_new_scatter_2D_R4  successful at general scatter section."
+
+    !!Verify that the last pe (numbered npes) did not get the segment array updated!
+    !if(pe == pelist(npes)) then
+    !   do i = 1,SS
+    !      do j = 1,SS
+    !         if (segment(i,j) /= -2 ) then
+    !            call mpp_error(FATAL, "Test scatter 2D failed. pe=npes segment was changed")
+    !         endif
+    !      end do
+    !   end do
+    !endif
+
+    call mpp_sync() !
+    write(out_unit,*) "Test test_new_scatter_2D_R4  successful ."
+
+end subroutine test_new_scatter_2D_R4
+
+      subroutine mpp_new_scatter(is, ie, js, je, pelist, local_data, scatter_data, pe, root)
+              use mpi
+              implicit none
+
+              integer :: ierr, num_procs, pe, root
+              integer :: is, ie, js, je
+              real(kind=4), dimension (:,:) :: scatter_data
+              real(kind=4), dimension (:,:) :: local_data
+              real(kind=4), allocatable, dimension (:) :: send_buffer
+              integer, dimension(4) :: local_indices
+              integer, dimension (:) :: pelist
+              integer, allocatable, dimension (:,:) :: global_indices
+              integer, allocatable, dimension (:) :: send_counts, displs
+              integer :: total_size, local_size, global_size
+              integer :: i, j, k, count, recv_size
+
+              num_procs = size(pelist)
+
+              local_indices(1) = is ;; local_indices(2) = ie
+              local_indices(3) = js ;; local_indices(4) = je
+
+              if (pe == root) then
+                      allocate(global_indices(4, num_procs ))
+              endif
+
+              call MPI_GATHER(local_indices, 4, MPI_INTEGER, &
+                             global_indices, 4, MPI_INTEGER, root, MPI_COMM_WORLD, ierr)
+
+              ! Calculate send counts and displacements for MPI_SCATTERV
+              if (pe == root) then
+                  allocate(send_counts(num_procs))
+                  allocate(displs(num_procs))
+                  displs(1) = 0
+                  total_size = 0
+
+                  ! Calculate the size of data to be sent to each process
+                  do k = 1, num_procs
+                    is = global_indices(1, k)
+                    ie = global_indices(2, k)
+                    js = global_indices(3, k)
+                    je = global_indices(4, k)
+                    send_counts(k) = (ie - is + 1) * (je - js + 1)
+                    if (k > 1) displs(k) = displs(k-1) + send_counts(k-1)
+                    total_size = total_size + send_counts(k)
+                  enddo
+
+                  ! Prepare the send buffer
+                  allocate(send_buffer(total_size))
+                  count = 1
+
+                  do k = 1, num_procs
+                     is = global_indices(1, k)
+                     ie = global_indices(2, k)
+                     js = global_indices(3, k)
+                     je = global_indices(4, k)
+
+                     do j = js, je
+                        do i = is, ie
+                           send_buffer(count) = scatter_data(i,j)
+                           count = count + 1
+                        enddo
+                     enddo
+                     enddo
+              endif
+
+              ! Allocate memory for receiving data for all processes
+              recv_size = (local_indices(2) - local_indices(1) + 1) * &
+                          (local_indices(4) - local_indices(3) + 1)
+
+              ! Scatter the data
+              call MPI_SCATTERV(send_buffer, send_counts, displs, MPI_REAL, &
+                                local_data, recv_size, MPI_REAL, root, MPI_COMM_WORLD, ierr)
+
+              if (pe == root) then
+                 deallocate(global_indices)
+              endif
+end subroutine mpp_new_scatter
 
   !> @brief Test the mpp_scatter functions with DOUBLE_KIND data arguments.
   subroutine test_scatter_2D_R8(npes,pe,root,out_unit)

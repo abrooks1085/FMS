@@ -29,6 +29,6 @@
 
 touch input.nml
 test_expect_success "mpp gather and scatter with mixed precision" '
-    mpirun -n 4 ./test_mpp_gatscat
+    mpirun -n 16 ./test_mpp_gatscat
 '
 test_done
