@@ -98,6 +98,24 @@ program test_diag_integral
 contains
   !-------------------------------------
   !-------------------------------------
+  subroutine initialize_arrays
+
+    !> made up numbers
+
+    implicit none
+
+    lon=1.0_lkind
+    lat=1.0_lkind
+    area=1.0_lkind
+    immadeup2=1.0_lkind
+    immadeup3=1.0_lkind
+    immadeupw=1.0_lkind
+    immadeuph=1.0_lkind
+    weight=1.0_lkind
+
+  end subroutine initialize_arrays
+  !-------------------------------------
+  !-------------------------------------
   subroutine test_diag_integral_init
 
     !> This test subroutine ony checks that diag_integral_init can be called successfully.
@@ -202,24 +220,6 @@ contains
     end if
 
   end subroutine check_answers
-  !-------------------------------------
-  !-------------------------------------
-  subroutine initialize_arrays
-
-    !> made up numbers
-
-    implicit none
-
-    lon=1.0_lkind
-    lat=1.0_lkind
-    area=1.0_lkind
-    immadeup2=1.0_lkind
-    immadeup3=1.0_lkind
-    immadeupw=1.0_lkind
-    immadeuph=1.0_lkind
-    weight=1.0_lkind
-
-  end subroutine initialize_arrays
   !-------------------------------------
   !-------------------------------------
 end program test_diag_integral
