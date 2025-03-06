@@ -36,6 +36,8 @@ use platform_mod,  only : r4_kind, r8_kind
 
 implicit none
 
+
+print *, 'start'
 !> create mosaic and grid files
 !! In orderr to create the mosaic and grid files, fms2_io needs to be initialized first
 call fms2_io_init()
@@ -44,8 +46,12 @@ call write_all()
 !! In this case, the grid_version is VERSION_OCN_MOSAIC_FILE.
 call fms_init()
 
+print *, 'cp 1'
+
 if(mpp_pe() .eq. mpp_root_pe()) write(*,*) 'TEST GET_MOSAIC_GRID_SIZES'
 call test_get_mosaic_grid_sizes()
+
+print *, 'cp2'
 
 if(mpp_pe() .eq. mpp_root_pe()) write(*,*) 'TEST GET_MOSAIC_CONTACT'
 call test_get_mosaic_contact()
@@ -54,16 +60,26 @@ call test_get_mosaic_contact()
 !if(mpp_pe() .eq. mpp_root_pe()) write(*,*) 'TEST GET_GRID_GREAT_CIRCLE_AREA'
 !call test_get_grid_great_circle_area()
 
+print *, 'cp3'
+
 if(mpp_pe() .eq. mpp_root_pe()) write(*,*) 'TEST CALC_MOSAIC_GRID_AREA'
 call test_calc_mosaic_grid_area()
+
+print *, 'cp4'
 
 if(mpp_pe() .eq. mpp_root_pe()) write(*,*) 'TEST GET_MOSAIC_XGRID'
 call test_get_mosaic_xgrid()
 
+print *, 'cp5'
+
 if(mpp_pe() .eq. mpp_root_pe()) write(*,*) 'TEST IS_INSIDE_POLYGON'
 call test_is_inside_polygon()
 
+print *, 'cp6'
+
 call fms_end()
+
+print *, 'End'
 
 contains
 !------------------------------------------------------!
@@ -76,19 +92,28 @@ subroutine test_get_mosaic_grid_sizes
   integer, allocatable :: nx_out(:), ny_out(:) !< number of grid points for each tile
   type(FmsNetcdfFile_t):: fileobj
 
+  print *, 'cp 11'
   !-- ocean --!
+  print *, 'ocn_mosaic_file', ocn_mosaic_file
   if( .not. open_file(fileobj, 'INPUT/'//trim(ocn_mosaic_file), 'read') ) &
        call mpp_error(FATAL, 'test_mosaic: error in opening file '//'INPUT/'//trim(ocn_mosaic_file))
 
+  print *, 'cp 12'
   allocate( nx_out(ocn_ntiles), ny_out(ocn_ntiles) )
   !> get_mosaic_grid_sizes reads in the grid file
   call get_mosaic_grid_sizes(fileobj, nx_out, ny_out )
+  print *, 'cp 12.1'
   do n=1, ocn_ntiles
      call check_answer(ocn_nx/2, nx_out(n), 'ocn TEST_GET_MOSAIC_GRID_SIZES')
+     print *, 'cp 12.2'
      call check_answer(ocn_nY/2, ny_out(n), 'ocn TEST_GET_MOSAIC_GRID_SIZES')
+     print *, 'cp 12.3'
   end do
   deallocate(nx_out, ny_out)
+  print *, 'deallocate'
   call close_file(fileobj)
+
+  print *, 'cp 13'
 
   !-- atm --!
   if( .not. open_file(fileobj, 'INPUT/'//trim(c1_mosaic_file), 'read') ) &
@@ -102,6 +127,8 @@ subroutine test_get_mosaic_grid_sizes
   end do
   deallocate(nx_out, ny_out)
   call close_file(fileobj)
+
+  print *, 'cp 14'
 
 end subroutine test_get_mosaic_grid_sizes
 !------------------------------------------------------!

@@ -732,23 +732,28 @@ subroutine netcdf_file_close(fileobj)
   integer :: err
   integer :: i
 
+  print *, 'start netcdf_file_close'
   if (fileobj%is_root) then
     err = nf90_close(fileobj%ncid)
     call check_netcdf_code(err, "netcdf_file_close:"//trim(fileobj%path))
   endif
+  print *, 'cp121'
   if (allocated(fileobj%is_open)) fileobj%is_open = .false.
   fileobj%path = missing_path
   fileobj%ncid = missing_ncid
   if (allocated(fileobj%pelist)) then
     deallocate(fileobj%pelist)
   endif
+  print *, 'cp122'
   fileobj%io_root = missing_rank
   fileobj%is_root = .false.
   if (allocated(fileobj%restart_vars)) then
     deallocate(fileobj%restart_vars)
   endif
+  print *, 'cp123'
   fileobj%is_restart = .false.
   fileobj%num_restart_vars = 0
+  print *, 'fileobj%num_compressed_dims', fileobj%num_compressed_dims
   do i = 1, fileobj%num_compressed_dims
     if (allocated(fileobj%compressed_dims(i)%npes_corner)) then
       deallocate(fileobj%compressed_dims(i)%npes_corner)
@@ -756,10 +761,15 @@ subroutine netcdf_file_close(fileobj)
     if (allocated(fileobj%compressed_dims(i)%npes_nelems)) then
       deallocate(fileobj%compressed_dims(i)%npes_nelems)
     endif
+    print *, 'cp124'
   enddo
+  print *, 'allocated(fileobj%compressed_dims)', allocated(fileobj%compressed_dims)
+  print *, 'SIZE(fileobj%compressed_dims)', SIZE(fileobj%compressed_dims)
   if (allocated(fileobj%compressed_dims)) then
     deallocate(fileobj%compressed_dims)
   endif
+  print *, 'Check compressed dims Deallocated', .NOT.(allocated(fileobj%compressed_dims))
+  print *, 'End netcdf_file_close'
 end subroutine netcdf_file_close
 
 
