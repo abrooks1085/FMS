@@ -585,10 +585,7 @@ CONTAINS
       this%att_value = att_value
     type is (character(len=*))
       allocate(character(len=len(att_value)) :: this%att_value(natt))
-      select type(aval => this%att_value)
-        type is (character(len=*))
-          aval = att_value
-      end select
+      this%att_value = att_value
     end select
   end subroutine fms_add_attribute
 
